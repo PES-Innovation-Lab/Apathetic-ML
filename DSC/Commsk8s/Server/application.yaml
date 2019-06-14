@@ -1,0 +1,41 @@
+apiVersion: apps/v1 #  for k8s versions before 1.9.0 use apps/v1beta2  and before 1.8.0 use extensions/v1beta1
+kind: Deployment
+metadata:
+  name: server
+spec:
+  selector:
+    matchLabels:
+      app: server
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: server
+    spec:
+      volumes:
+        # Volumes have a name and configuration based on the type of volume.
+        # In this example, we use the emptyDir volume type
+        - name: storage
+          # nfs:
+          #   server: nfs-service.default.svc.cluster.local
+          #   path: /
+          persistentVolumeClaim:
+            claimName: vclaim
+
+      # Now, one of our containers can mount this volume and use it like
+      # any other directory
+      containers:
+        - name: hydra
+          volumeMounts:
+            - name: storage # This is the name of the volume we set at the pod level
+              mountPath: /dev/store # Where to mount this directory in our container
+          image: altariax0x01/server
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+          command: ["sh","start.sh"]
+          ports:
+            - containerPort: 80
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always

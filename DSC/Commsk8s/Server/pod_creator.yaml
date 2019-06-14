@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: worker1
+  labels:
+    app: server
+spec:
+      volumes:
+        - name: nfs-store
+          persistentVolumeClaim:
+            claimName: nfsclaim
+        - name: local-store
+          persistentVolumeClaim:
+            claimName: localclaim
+      containers:
+        - name: hydra
+          volumeMounts:
+            - name: nfs-store 
+              mountPath: /dev/nfs/store
+            - name: local-store
+              mountPath: /dev/local/store
+          image: altariax0x01/server
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+          command: ["sh","start.sh"]
+          ports:
+            - containerPort: 80
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: worker2
+  labels:
+    app: server
+spec:
+      volumes:
+        - name: nfs-store
+          persistentVolumeClaim:
+            claimName: nfsclaim
+        - name: local-store
+          persistentVolumeClaim:
+            claimName: localclaim
+      containers:
+        - name: hydra
+          volumeMounts:
+            - name: nfs-store 
+              mountPath: /dev/nfs/store
+            - name: local-store
+              mountPath: /dev/local/store
+          image: altariax0x01/server
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+          command: ["sh","start.sh"]
+          ports:
+            - containerPort: 80
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: worker3
+  labels:
+    app: server
+spec:
+      volumes:
+        - name: nfs-store
+          persistentVolumeClaim:
+            claimName: nfsclaim
+        - name: local-store
+          persistentVolumeClaim:
+            claimName: localclaim
+      containers:
+        - name: hydra
+          volumeMounts:
+            - name: nfs-store 
+              mountPath: /dev/nfs/store
+            - name: local-store
+              mountPath: /dev/local/store
+          image: altariax0x01/server
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+          command: ["sh","start.sh"]
+          ports:
+            - containerPort: 80
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
