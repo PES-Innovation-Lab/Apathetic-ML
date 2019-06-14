@@ -13,7 +13,9 @@ args = ["python3", "{}{}".format(path_to_run, py_name)]
 
 lrm=None
 
-iplist=["http://127.0.0.1:3000","http://127.0.0.1:6000"]
+#iplist=["http://127.0.0.1:3000","http://127.0.0.1:6000"]
+s='worker'
+iplist=[s + str(i) for i in range(1,3)]
 
 sesh=requests.Session()
 
