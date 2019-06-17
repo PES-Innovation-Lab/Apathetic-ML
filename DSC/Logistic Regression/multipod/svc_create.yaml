@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: master
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  selector:
+    target: master
+  type: LoadBalancer
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker0
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  selector:
+    target: worker0
+  type: LoadBalancer
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker1
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  selector:
+    target: worker1
+  type: LoadBalancer
