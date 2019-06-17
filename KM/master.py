@@ -8,14 +8,12 @@ import threading
 app = flask.Flask(__name__)
 
 path_to_run = './'          #directory here
-py_name = 'LR(Master).py'   #fileName here
+py_name = 'KM(Master).py'   #fileName here
 args = ["python3", "{}{}".format(path_to_run, py_name)]
 
 lrm=None
 
-#iplist=["http://127.0.0.1:3000","http://127.0.0.1:6000"]
-s='worker'
-iplist=[s +'0' + str(i) for i in range(1,3)]
+iplist=["http://127.0.0.1:3000","http://127.0.0.1:6000"]
 
 sesh=requests.Session()
 
@@ -35,7 +33,7 @@ def start():
             initw = threading.Thread(target=sesh.get, args=(url,))
             initw.start()                   #start lr(worker) api
             time.sleep(0.5)
-        url='http://127.0.0.1:4000/api/master/lr/start'
+        url='http://127.0.0.1:4000/api/master/km/start'
         initmodel = threading.Thread(target=sesh.get, args=(url,))
         initmodel.start()               #begin training
         return flask.Response(status=202)   #code:accepted
@@ -58,5 +56,5 @@ def stop():
 
 
 if __name__ == '__main__':
-    #app.run(host='127.0.0.1', port=2000)
-    app.run(host='127.0.0.1', port = 4000)
+    app.run(host='127.0.0.1', port=2000)
+

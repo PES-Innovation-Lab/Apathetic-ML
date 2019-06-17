@@ -19,7 +19,7 @@ regressor=None
 
 #iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000"]
 s = 'worker'
-iplist = [s+str(i) for i in range(1,3)]
+iplist = [s+'0'+str(i) for i in range(1,3)]
 
 thread_local = threading.local()
 
