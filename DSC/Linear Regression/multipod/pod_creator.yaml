@@ -1,42 +1,36 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: worker00
+  name: worker0
   labels:
     app: server
+    target: worker0
 spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - server
-            topologyKey: "kubernetes.io/hostname"
+      selector:
+        matchLabels:
+          target: worker0
       volumes:
-        - name: nfs-store
-          persistentVolumeClaim:
-            claimName: nfsclaim
+        # - name: nfs-store
+        #   persistentVolumeClaim:
+        #     claimName: nfsclaim
         - name: local-store
           persistentVolumeClaim:
             claimName: localclaim
       containers:
         - name: hydra
           volumeMounts:
-            - name: nfs-store 
-              mountPath: /dev/nfs/store
+            # - name: nfs-store 
+            #   mountPath: /dev/nfs/store
             - name: local-store
               mountPath: /dev/local/store
-          image: altariax0x01/server
+          image: worker
           imagePullPolicy: IfNotPresent
           env:
             - name: GET_HOSTS_FROM
               value: dns
           command: ["sh","start.sh"]
           ports:
-            - containerPort: 80
+            - containerPort: 4000
       dnsPolicy: ClusterFirst
       restartPolicy: Always
 
@@ -45,42 +39,36 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: worker2
+  name: worker1
   labels:
     app: server
+    target: worker1
 spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - server
-            topologyKey: "kubernetes.io/hostname"
+      selector:
+        matchLabels:
+          target: worker1
       volumes:
-        - name: nfs-store
-          persistentVolumeClaim:
-            claimName: nfsclaim
+        # - name: nfs-store
+        #   persistentVolumeClaim:
+        #     claimName: nfsclaim
         - name: local-store
           persistentVolumeClaim:
             claimName: localclaim
       containers:
         - name: hydra
           volumeMounts:
-            - name: nfs-store 
-              mountPath: /dev/nfs/store
+            # - name: nfs-store 
+            #   mountPath: /dev/nfs/store
             - name: local-store
               mountPath: /dev/local/store
-          image: altariax0x01/server
+          image: worker
           imagePullPolicy: IfNotPresent
           env:
             - name: GET_HOSTS_FROM
               value: dns
           command: ["sh","start.sh"]
           ports:
-            - containerPort: 80
+            - containerPort: 4000
       dnsPolicy: ClusterFirst
       restartPolicy: Always
 
@@ -92,38 +80,32 @@ metadata:
   name: master
   labels:
     app: server
+    target: master
 spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - server
-            topologyKey: "kubernetes.io/hostname"
+      selector:
+        matchLabels:
+          target: master
       volumes:
-        - name: nfs-store
-          persistentVolumeClaim:
-            claimName: nfsclaim
+        # - name: nfs-store
+        #   persistentVolumeClaim:
+        #     claimName: nfsclaim
         - name: local-store
           persistentVolumeClaim:
             claimName: localclaim
       containers:
         - name: hydra
           volumeMounts:
-            - name: nfs-store 
-              mountPath: /dev/nfs/store
+            # - name: nfs-store 
+            #   mountPath: /dev/nfs/store
             - name: local-store
               mountPath: /dev/local/store
-          image: 
+          image: unixmaster
           imagePullPolicy: IfNotPresent
           env:
             - name: GET_HOSTS_FROM
               value: dns
           command: ["sh","start.sh"]
           ports:
-            - containerPort: 80
+            - containerPort: 4000
       dnsPolicy: ClusterFirst
       restartPolicy: Always
