@@ -14,9 +14,9 @@ app = flask.Flask(__name__)
 CORS(app)
 
 # Importing the dataset
-dataset = pd.read_csv('Social_Network_Ads.csv')
-X = dataset.iloc[:, [2,3]].values
-y = dataset.iloc[:, 4].values
+dataset = pd.read_csv('USA_Housing.csv')
+X = dataset.iloc[:,0:5].values
+y = dataset.iloc[:,5].values
 
 # Splitting the dataset into the Training set and Test set
 from sklearn.model_selection import train_test_split
@@ -41,13 +41,13 @@ def get_session():
         thread_local.session = requests.Session()
     return thread_local.session
 
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
+#from sklearn.model_selection import train_test_split
+#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
 
-from sklearn.preprocessing import StandardScaler
-sc_X = StandardScaler()
-X_train = sc_X.fit_transform(X_train)
-X_test = sc_X.transform(X_test)
+#from sklearn.preprocessing import StandardScaler
+#sc_X = StandardScaler()
+#X_train = sc_X.fit_transform(X_train)
+#X_test = sc_X.transform(X_test)
 
 
 class LinearRegressor:
