@@ -1,4 +1,4 @@
-FROM altariax0x01/genworker
+FROM altariax0x01/controller
 
 WORKDIR /app
 
