@@ -1,0 +1,52 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: core-nfs
+  labels:
+    type: nfs
+spec:
+  storageClassName: nfs-core
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: nfs-server-core.default.svc.cluster.local
+    path: "/"
+    readOnly: false
+    
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: shadow-nfs
+  labels:
+    type: nfs
+spec:
+  storageClassName: nfs-shadow
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: nfs-server-shadow.default.svc.cluster.local
+    path: "/"
+    readOnly: false
+
+---
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: pv-local
+  labels:
+    type: local
+spec:
+  storageClassName: local
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/dev/disk/"
+  
