@@ -47,7 +47,7 @@ def initmodel():
 def fitmodel():
     global user
     global sesh
-    weights=numpy.array(flask.request.json['weights'])
+    weights=np.array(flask.request.json['weights'])
     biases=flask.request.json['biases']
     step=flask.request.json['step']
     (weights,biases)=user.fit_model(weights,biases,step)

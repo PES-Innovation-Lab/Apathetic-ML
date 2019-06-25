@@ -1,12 +1,13 @@
-FROM unixmaster
+FROM altariax0x01/log_reg_master
 
 WORKDIR /app
 
+CMD ['rm', '-r', '*']
 COPY . /app
 #RUN pip3 install --trusted-host pypi.python.org -r requirements.txt
 #RUN apt-get -y install python3-pip
 #RUN apt-get -y install python3-pip
-EXPOSE 4000 5000
+EXPOSE 4000 5000 873 22
 
 ENV NAME ApatheticML
 

@@ -17,7 +17,6 @@ args = ["python3", "{}{}".format(path_to_run, py_name)]
 #args = ["gunicorn", "-b","0.0.0.0:5000", "LR(Master):app","--timeout","120"]
 lrm=None
 
-#iplist=["http://127.0.0.1:3000","http://127.0.0.1:6000"]
 s='http://worker'
 iplist=[s + str(i)+':4000' for i in range(0,2)]
 
@@ -29,7 +28,7 @@ def hello():
     a= "<html><meta http-equiv=\"refresh\" content=\"5\" ><h1>Master</h1>"
     proc = subprocess.Popen(["tac", "out"], stdout=subprocess.PIPE)
     (out, err) = proc.communicate()
-    a = a + "<p>"+str(out)+"</p></html>"
+    a = a + "<p>"+str(out.decode('ascii'))+"</p></html>"
     return a
 
 @app.route('/api/master/start', methods = ['GET'])
@@ -47,7 +46,7 @@ def start():
             initw = threading.Thread(target=sesh.get, args=(url,))
             initw.start()                   #start lr(worker) api
             time.sleep(0.5)
-        url='http://master:5000/api/master/lr/start'
+        url='http://localhost:5000/api/master/lr/start'
 
         initmodel = threading.Thread(target=sesh.get, args=(url,))
         initmodel.start()               #begin training

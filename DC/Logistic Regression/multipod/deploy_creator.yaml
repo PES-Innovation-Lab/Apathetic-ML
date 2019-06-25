@@ -29,7 +29,7 @@ spec:
             #   mountPath: /dev/nfs/store
             - name: local-store
               mountPath: /dev/local/store
-          image: altariax0x01/worker
+          image: altariax0x01/log_reg_worker
           imagePullPolicy: Always
           env:
             - name: GET_HOSTS_FROM
@@ -73,7 +73,7 @@ spec:
             #   mountPath: /dev/nfs/store
             - name: local-store
               mountPath: /dev/local/store
-          image: altariax0x01/worker
+          image: altariax0x01/log_reg_worker
           imagePullPolicy: Always
           env:
             - name: GET_HOSTS_FROM
@@ -118,7 +118,7 @@ spec:
             #   mountPath: /dev/nfs/store
             - name: local-store
               mountPath: /dev/local/store
-          image: altariax0x01/unixmaster
+          image: altariax0x01/log_reg_master
           imagePullPolicy: Always
           env:
             - name: GET_HOSTS_FROM
