@@ -14,6 +14,10 @@ os.system('touch out')
 a = socket.gethostname()
 service_name = a[:a.find('-')]
 cont = 'controller:4000'
+path_to_run = ''          #directory here
+py_name = 'LR(Worker).py'   #fileName here
+args = ["python3", "{}{}".format(path_to_run, py_name)]
+lrw = None
 
 def state_check(controller,selfhost):
     ret = 'x'
@@ -64,21 +68,37 @@ def hello():
 @app.route('/api/worker/start/<string:filepath>', methods = ['GET'])
 def start(filepath):
     #begins processing, first ask for a file, then copy it to local mem for now
-    with open("out",'a') as std:
-        print("Worker is starting now",file=std)
-    a = socket.gethostname()
-    url = 'http://controller:4000/api/gimmedata/' + str(a)
-    r = requests.get(url)
-    file_to_be_used = r.content
-    file_to_be_used = file_to_be_used.decode("utf-8") 
-    with open("out",'a') as std:
-        print("Allocated: ",file_to_be_used,file=std)
-    proc = subprocess.Popen(["cp",'/dev/core/data/'+str(file_to_be_used),'/dev/pers/'+filepath],stdout=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    with open("out",'a') as std:
-        print("Output:",str(out.decode('ascii')),"Stderr:",str(err),file=std)
-    
-    return flask.Response(status=200)
+    global lrw
+    global output
+    if lrw is not None:    #if process is running or has run before
+        return flask.Response(status=409)   #code:conflict
+    else:                   #process never run    
+        
+        with open("out",'a') as std:
+            print("Worker is starting now",file=std)
+        a = socket.gethostname()
+        url = 'http://controller:4000/api/gimmedata/' + str(a)
+        r = requests.get(url)
+        file_to_be_used = r.content
+        file_to_be_used = file_to_be_used.decode("utf-8") 
+        with open("out",'a') as std:
+            print("Allocated: ",file_to_be_used,file=std)
+        proc = subprocess.Popen(["cp",'/dev/core/data/'+str(file_to_be_used),'/app/'+filepath],stdout=subprocess.PIPE)
+        (out, err) = proc.communicate()
+        with open("out",'a') as std:
+            print("Output:",str(out.decode('ascii')),"Stderr:",str(err),file=std)
+        lrw=subprocess.Popen(args)
+        return flask.Response(status=202)
+
+@app.route('/api/worker/stop', methods = ['GET'])
+def stop():
+    global lrw
+    if lrw is not None:    #if process is running or has completed
+        lrw.terminate()
+        lrw=None
+        return flask.Response(status=200)   #code:ok
+    else:                   #process never run
+        return flask.Response(status=403)   #code:forbidden
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=4000)
