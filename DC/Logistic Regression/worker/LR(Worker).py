@@ -24,7 +24,7 @@ class User:
         #y_pred = self.train_dataset[self.batch_size*step : self.batch_size*step + self.batch_size]@self.weights + self.biases
         y_pred = 1/(1+ np.exp(self.train_dataset[self.batch_size*step : self.batch_size*step + self.batch_size]@self.weights + self.biases))
         mse_loss_grad = (y_pred-self.train_y[self.batch_size*step : self.batch_size*step + self.batch_size].reshape(self.batch_size,1))/self.batch_size
-        return (self.train_dataset[self.batch_size*step : self.batch_size*step + self.batch_size].T @ mse_loss_grad)*self.learning_rate,numpy.mean((y_pred-self.train_y[self.batch_size*step : self.batch_size*step + self.batch_size].reshape(self.batch_size,1)))*self.learning_rate       #send back updates
+        return (self.train_dataset[self.batch_size*step : self.batch_size*step + self.batch_size].T @ mse_loss_grad)*self.learning_rate,np.mean((y_pred-self.train_y[self.batch_size*step : self.batch_size*step + self.batch_size].reshape(self.batch_size,1)))*self.learning_rate       #send back updates
 
 
 @app.route('/api/worker/lr/userinit', methods = ['POST'])
@@ -37,8 +37,8 @@ def userinit():
 @app.route('/api/worker/lr/initmodel', methods = ['POST'])
 def initmodel():
     global user
-    train_dataset=numpy.array(flask.request.json['train_dataset'])
-    train_y=numpy.array(flask.request.json['train_y'])
+    train_dataset=np.array(flask.request.json['train_dataset'])
+    train_y=np.array(flask.request.json['train_y'])
     batch_size=flask.request.json['batch_size']
     user.init_model(train_dataset,train_y,batch_size)
     return flask.Response(status = 200)

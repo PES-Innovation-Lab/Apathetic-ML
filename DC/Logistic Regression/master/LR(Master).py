@@ -30,7 +30,6 @@ X_test = sc_X.transform(X_test)
 
 regressor=None
 
-#iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000"]
 s = 'http://worker'
 iplist = [s+str(i)+':5000' for i in range(0,2)]
 

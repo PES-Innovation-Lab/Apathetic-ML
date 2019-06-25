@@ -1,8 +1,8 @@
-FROM altariax0x01/genworker
+FROM altariax0x01/log_reg_worker
 
 WORKDIR /app
 
-CMD ['rm','-r' , '*']
+RUN cd /app && rm -r *
 COPY . /app
 #RUN apk update && apk add make automake gcc g++ subversion python3-dev python-dev python3 py-pip nfs-utils && pip3 install --trusted-host pypi.python.org -r requirements.txt
 #RUN pip3 install --trusted-host pypi.python.org -r requirements.txt

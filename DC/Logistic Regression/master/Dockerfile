@@ -2,7 +2,7 @@ FROM altariax0x01/log_reg_master
 
 WORKDIR /app
 
-CMD ['rm', '-r', '*']
+RUN cd /app && rm -r *
 COPY . /app
 #RUN pip3 install --trusted-host pypi.python.org -r requirements.txt
 #RUN apt-get -y install python3-pip
