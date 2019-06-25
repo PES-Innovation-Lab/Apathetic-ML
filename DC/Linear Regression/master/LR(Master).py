@@ -30,7 +30,6 @@ X_test = sc_X.transform(X_test)
 
 regressor=None
 
-#iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000"]
 s = 'http://worker'
 iplist = [s+str(i)+':5000' for i in range(0,2)]
 
@@ -54,7 +53,7 @@ class LinearRegressor:
     def __init__(self,learning_rate = 0.1,n_users = 1):
         self.n_users = n_users
         self.learning_rate = learning_rate
-    def fit(self,train_dataset,train_y,n_iters = 200,batch_size = 200):
+    def fit(self,train_dataset,train_y,X_test,y_test,n_iters = 200,batch_size = 200):
         global iplist
         self.number_of_weights = train_dataset.shape[1]
         self.weights = numpy.random.rand(self.number_of_weights,1)
@@ -68,6 +67,7 @@ class LinearRegressor:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for user_i in range(self.n_users):
                 executor.submit(self.users[user_i].init_model,self.train_dataset_user_batches[user_i],self.train_y_user_batches[user_i],self.batch_size//self.n_users)
+        a = time.time()
         for j in range(n_iters):
             for step_i in range((train_y.shape[0]//self.batch_size)):
                 with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -75,6 +75,14 @@ class LinearRegressor:
                         executor.submit(self.users[user_i].fit_model,self.weights,self.biases,step_i)
                     #with open("out",'a') as standardout:
                         #print("ITER",j,file=standardout)
+        b = time.time()
+        with open("out",'a') as standardout:
+            print("EXEC TIME:",b-a,'s',file=standardout)
+        y_pred = self.predict(X_test)
+        test_loss=self.test_loss(X_test,y_test)
+        with open("out",'a') as standardout:
+            print("Test Loss",test_loss,file=standardout)
+
     def test_loss(self,test_dataset,test_y):
         result = test_dataset @ self.weights + self.biases
         result_loss = numpy.square(result-test_y).mean()
@@ -124,21 +132,15 @@ class User:
 @app.route('/api/master/lr/start', methods = ['GET'])
 def start():
     global regressor
+    global X_test
+    global y_test
     with open("out",'a') as standardout:
         print("Starting processing\n",file=standardout)
-    a=time.time()
+    
     regressor = LinearRegressor(learning_rate=0.001,n_users=2)
-    initw = threading.Thread(target=regressor.fit, args=(X_train,y_train,100))
+    initw = threading.Thread(target=regressor.fit, args=(X_train,y_train,X_test,y_test,200))
     initw.start() 
-    #regressor.fit(X_train,y_train,n_iters = 100)
-    b=time.time()
-    with open("out",'a') as standardout:
-        print("TIME TO EXEC:",b-a,file=standardout)
-    y_pred = regressor.predict(X_test)
-    test_loss=regressor.test_loss(X_test,y_test)
-    with open("out",'a') as standardout:
-        print(test_loss,file=standardout)
-    #print(y_pred[:10])
+    
     return flask.Response(status = 200)
 
 @app.route('/api/master/lr/updatemodel', methods = ['POST'])
