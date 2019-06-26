@@ -54,10 +54,11 @@ def crasher():
 def hello():
     a = socket.gethostname()
     a= "<html><meta http-equiv=\"refresh\" content=\"5\" ><h1>Worker - Running</h1><h2>Host Name: "+str(a)+"</h2>"
-    proc = subprocess.Popen(["tac", "out"], stdout=subprocess.PIPE)
+    proc = subprocess.Popen(["cat", "out"], stdout=subprocess.PIPE)
     (out, err) = proc.communicate()
-    a = a + "<p>"+str(out.decode('ascii'))+"</p></html>"
-    return a
+    for item in out.decode('ascii').split('\n'):
+        a += "<p>"+str(item)+"</p>"
+    return a+"</html>"
 
 @app.route('/api/worker/start/<string:filepath>', methods = ['GET'])
 def start(filepath):
