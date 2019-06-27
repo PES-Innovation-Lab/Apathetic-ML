@@ -22,7 +22,7 @@ with open("out",'a') as standardout:
 cluster=None
 
 s = 'http://worker'
-iplist = [s+str(i)+':5000' for i in range(0,3)]
+iplist = []
 
 #iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000"]
 
@@ -41,7 +41,7 @@ dataset = sc_X.fit_transform(dataset)
 class KCluster:
     def __init__(self,n_users=10):
         self.n_users = n_users
-    def fit_cluster(self,dataset,k=5,n_iters = 10):
+    def fit_cluster(self,dataset,k=5,n_iters = 60):
         global iplist
         self.dataset = dataset
         self.k = k
@@ -61,21 +61,22 @@ class KCluster:
                 executor.submit(self.users[user_i].find_best_cluster)
     def recieve_combs(self,cluster):
         self.final_clusters.append(cluster)
-        if len(self.final_clusters)==len(iplist)-1: 
+        if len(self.final_clusters)==len(iplist): 
             err = self.final_clusters[0][1]
             self.cluster = self.final_clusters[0][0]
             for i in self.final_clusters:
                 if i[1]<err:
                     self.cluster = i[0]
                     err = i[1]
-            #with open("out",'a') as standardout:
-            #   print("CLUSTER PRINT",self.cluster,err,file=standardout)
+            
+            with open("out",'a') as standardout:
+               print("ERROR",err,file=standardout)
     
     def ret_cen(self):
         #final_clusters = np.array(self.final_clusters)
-        with open("out",'a') as standardout:
-            print(self.cluster,file=standardout)
-        return np.array([np.mean(x) for x in self.cluster])
+        #with open("out",'a') as standardout:
+            #print(self.cluster,file=standardout)
+        return (np.array([np.mean(x) for x in self.cluster]),len(self.final_clusters))
         #return self.final_clusters
     
 class User:
@@ -100,16 +101,22 @@ class User:
         #send req to fit model with dataset and combs
         
         
-@app.route('/api/master/km/start', methods = ['GET'])
-def start():
+@app.route('/api/master/km/start/<string:workers>', methods = ['GET'])
+def start(workers):
     global cluster
+    global number_of_workers
+    global s
+    global iplist
+    abc = workers.split("+")
+    number_of_workers = int(abc[0])
+    iplist= [s+str(i)+':5000' for i in range(0,number_of_workers)]
     a=time.time()
-    cluster = KCluster(n_users=2)
-    clusters = (cluster.fit_cluster(dataset = dataset,k = 3))
+    cluster = KCluster(n_users=number_of_workers)
+    clusters = (cluster.fit_cluster(dataset = dataset,k = 3,n_iters=int(abc[1])))
     b=time.time()
     with open("out",'a') as standardout:
             print("EXEC TIME:",b-a,'s',file=standardout)
-            print(cluster.ret_cen(),file=standardout)
+            print("Means, Number of workers",cluster.ret_cen(),file=standardout)
     return flask.Response(status = 200)
     
 @app.route('/api/master/km/receivecombs', methods = ['POST'])
