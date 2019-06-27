@@ -3,6 +3,7 @@ import requests
 import subprocess
 import time
 import threading
+import socket
 from flask_cors import CORS
 import os
 state = 0 # not started
@@ -44,12 +45,22 @@ def reset():
     
 @app.route('/')
 def hello():
-    a= "<html><meta http-equiv=\"refresh\" content=\"5\" ><h1>Controller - Running</h1>"
+    a = socket.gethostname()
+    a= "<html><meta http-equiv=\"refresh\" content=\"5\" ><style>.split {height: 100%;width: 50%;position: fixed;z-index: 1;top: 0;overflow-x: hidden;padding-top: 100px;} .left {left: 0;} .right {right: 0;}</style><h1>Controller - Running</h1><h2>Host Name: "+str(a)+"</h2><div class=\"split left\">"
     proc = subprocess.Popen(["cat", "out"], stdout=subprocess.PIPE)
     (out, err) = proc.communicate()
     for item in out.decode('ascii').split('\n'):
         a += "<p>"+str(item)+"</p>"
-    return a+"</html>"
+    a+="</div><div class=\"split right\">"
+    proc = subprocess.Popen(["cat", "standarda"], stdout=subprocess.PIPE)
+    (out, err) = proc.communicate()
+    for item in out.decode('ascii').split('\n'):
+        a += "<p>"+str(item)+"</p>"
+    proc = subprocess.Popen(["cat", "standardb"], stdout=subprocess.PIPE)
+    (out, err) = proc.communicate()
+    for item in out.decode('ascii').split('\n'):
+        a += "<p>"+str(item)+"</p>"
+    return a+"</div></html>"
 
 @app.route('/api/startdeploy', methods = ['POST'])
 def start():

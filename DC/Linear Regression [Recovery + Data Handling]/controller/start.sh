@@ -1,2 +1,3 @@
 #gunicorn -b 0.0.0.0:4000 master:app --timeout 120
-python3 controller.py
+touch standarda standardb
+python3 controller.py > standarda

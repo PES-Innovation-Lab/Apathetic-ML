@@ -30,8 +30,8 @@ X_test = sc_X.transform(X_test)
 regressor=None
 
 s = 'http://worker'
-iplist = [s+str(i)+':5000' for i in range(0,2)]
-
+iplist = []
+wb = []
 thread_local = threading.local()
 
 def get_session():
@@ -87,6 +87,8 @@ class LinearRegressor:
     def update_model(self, weights, biases):
         self.weights -= weights      #recieve the updates in a sperate asynchronous function
         self.biases -= biases
+        global wb
+        wb.append([[self.weights,weights],[self.biases,biases]])
         #with open("out",'a') as standardout:
             #print(self.weights,self.biases,file=standardout)
 
@@ -123,15 +125,17 @@ class User:
         '''
 
 
-@app.route('/api/master/lr/start', methods = ['GET'])
-def start():
+@app.route('/api/master/lr/start/<string:workers>', methods = ['GET'])
+def start(workers):
     global regressor
     global X_test
     global y_test
+    global iplist
     with open("out",'a') as standardout:
         print("Starting processing\n",file=standardout)
+    iplist = [s+str(i)+':5000' for i in range(0,int(workers))]
     
-    regressor = LinearRegressor(learning_rate=0.001,n_users=2)
+    regressor = LinearRegressor(learning_rate=0.001,n_users=int(workers))
     #initw = threading.Thread(target=regressor.fit, args=(X_train,y_train,X_test,y_test,100))
     #initw.start()
     regressor.fit(X_train,y_train,X_test,y_test,100)
@@ -147,7 +151,12 @@ def updatemodel():
     regressor.update_model(weights,biases)
     return flask.Response(status = 200)
 
-
+@app.route('/api/gimmeresults')
+def results():
+    global wb
+    with open('a','w') as myfile:
+        print(wb,file=myfile)
+        
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 #app.run(host='127.0.0.1', port=3000)

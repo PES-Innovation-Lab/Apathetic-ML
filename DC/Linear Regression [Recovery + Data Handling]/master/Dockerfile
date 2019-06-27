@@ -1,4 +1,4 @@
-FROM altariax0x01/controller
+FROM altariax0x01/lr_master_res
 
 WORKDIR /app
 RUN cd /app && rm -r *

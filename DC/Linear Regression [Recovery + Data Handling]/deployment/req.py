@@ -8,7 +8,7 @@ splits = sys.argv[4]
 path = sys.argv[5]
 header = sys.argv[6]
 url = 'http://'+ip+"/"+call
-payload = {'filename': filename,'splits':splits,'path':path,'header':header}
+payload = {'filename': filename,'splits':splits,'path':path,'header':header,'workers':splits}
 headers = {'content-type': 'application/json'}
 print(payload)
 r = requests.post(url, data=json.dumps(payload), headers=headers)

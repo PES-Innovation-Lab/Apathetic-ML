@@ -56,7 +56,7 @@ def initmodel():
         with open("out",'a') as standardout:
             print("Xshape",X.shape,file=standardout)    
         batch_size=flask.request.json['batch_size']
-        user.init_model(X.tolist(),y.tolist(),batch_size)
+        user.init_model(X,y,batch_size)
         return flask.Response(status = 200)
     except Exception as e:
         with open("out",'a') as standardout:
