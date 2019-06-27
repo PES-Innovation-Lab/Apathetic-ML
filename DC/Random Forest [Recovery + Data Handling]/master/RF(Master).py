@@ -15,7 +15,7 @@ app = flask.Flask(__name__)
 CORS(app)
 #iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000"]
 s = 'http://worker'
-iplist = [s+str(i)+':5000' for i in range(0,3)]
+iplist = []
 
 thread_local = threading.local()
 
@@ -55,13 +55,22 @@ class RF:
             for i in range(self.n_users):
                 #futures.append(executor.submit(User,self.n_trees//self.n_users,X,y,iplist[i]))
                 futures.append(executor.submit(User,self.n_trees//self.n_users,iplist[i]))
+        with open("out",'a') as standardout:
+            print("FIRST FOR",time.time()-a,file=standardout)
+            
         for i in futures:
             users.append(i.result())
         #users = [User(self.n_trees//self.n_users,X,y) for i in range(self.n_users)]
         dts = []
+        futures = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for i in range(self.n_users):
-                executor.submit(dts.extend,users[i].fit(i))
+                futures.append(executor.submit(users[i].fit,i))
+        with open("out",'a') as standardout:
+            print("SECOND FOR",time.time()-a,file=standardout)
+        
+        for i in futures:
+            dts.extend(i.result())
         #for i in range(self.n_users):
         #    dts.extend(users[i].fit(i))
         self.DTs = []
@@ -128,15 +137,19 @@ class User:
         return dts
         '''
 
-@app.route('/api/master/rf/start', methods = ['GET'])
-def start():
+@app.route('/api/master/rf/start/<string:workers>', methods = ['GET'])
+def start(workers):
     global X_test
     global X_train
     global y_test
-    global y_train    
-    rf = RF(3)
+    global y_train
+    global iplist
+
+    iplist = [s+str(i)+':5000' for i in range(0,int(workers))] 
+    rf = RF(int(workers))
+    
     #rf.fit(100,X_train,y_train)
-    initw = threading.Thread(target=rf.fit, args=(100,X_train,X_test,y_train,y_test))
+    initw = threading.Thread(target=rf.fit, args=(240,X_train,X_test,y_train,y_test))
     initw.start() 
     return flask.Response(status = 200)
 

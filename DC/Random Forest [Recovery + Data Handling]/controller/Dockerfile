@@ -1,4 +1,4 @@
-FROM altariax0x01/controller
+FROM altariax0x01/rf_controller
 
 WORKDIR /app
 

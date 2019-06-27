@@ -5,6 +5,10 @@ import requests
 import flask
 import json
 import pandas as pd
+import time
+import gc
+from multiprocessing import Process, Queue
+
 from flask_cors import CORS
 app = flask.Flask(__name__)
 CORS(app)
@@ -12,6 +16,14 @@ user=None
 
 sesh=requests.Session()
 
+def file_dumper(q,t_file_name,item):
+    d_temp_file = open('/dev/core/files/'+t_file_name, 'wb')
+    gc.disable()
+    pickle.dump(item, d_temp_file,-1)
+    gc.enable()
+    d_temp_file.close()
+    q.put(t_file_name)
+    
 class User:
     def __init__(self,n_trees,X,y):
         self.n_trees = n_trees
@@ -21,8 +33,9 @@ class User:
         datasets =[]
         DTs = []
         s = str(user_i)+'_'
+        z = time.time()
         with open("out",'a') as standardout:
-            print("[Fitting]\n",file=standardout)
+            print("[Fitting]",file=standardout)
     
         for i in range(self.n_trees):
             data_indeces = np.random.randint(0,self.X.shape[0],self.X.shape[0])
@@ -31,11 +44,30 @@ class User:
             temp_d.fit(self.X[data_indeces,y_indeces].reshape(data_indeces.shape[0],y_indeces.shape[0]),self.y[data_indeces])
             DTs.append((temp_d,y_indeces))
         dts = []
+        filestart = time.time()
+        q = Queue()
+        proc = []
         for i in range(len(DTs)):
             t_file_name = s+str(i)+'.pkl'
-            d_temp_file = open('/dev/core/files/'+t_file_name, 'wb')
-            pickle.dump(DTs[i], d_temp_file)
-            dts.append(t_file_name)
+            #d_temp_file = open('/dev/core/files/'+t_file_name, 'wb')
+            #gc.disable()
+            #pickle.dump(DTs[i], d_temp_file,-1)
+            #gc.enable()
+            p = Process(target=file_dumper,args=(q,t_file_name,DTs[i]))
+            p.start()
+            proc.append(p)
+            
+        for i in range(len(DTs)):
+            proc[i].join()
+            dts.append(q.get()) ####DANGER
+            #d_temp_file.close()
+            
+        filestop = time.time()
+        v = time.time()
+        with open("out",'a') as standardout:
+            print("FIT TIME",v-z,file=standardout)
+        with open("out",'a') as standardout:
+            print("FILE TIME",filestop-filestart,file=standardout)
         return dts
         
         
