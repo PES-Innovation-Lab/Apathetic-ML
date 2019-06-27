@@ -10,10 +10,10 @@ spec:
   - name: lr
     port: 5000
     targetPort: 5000
-  - name: svc_port1
+  - name: svc-port1
     port: 873
     targetPort: 873
-  - name: svc_port2
+  - name: svc-port2
     port: 22
     targetPort: 22
 
@@ -37,10 +37,10 @@ spec:
   - name: lr
     port: 5000
     targetPort: 5000
-  - name: svc_port1
+  - name: svc-port1
     port: 873
     targetPort: 22
-  - name: svc_port2
+  - name: svc-port2
     port: 22
     targetPort: 22
   selector:
