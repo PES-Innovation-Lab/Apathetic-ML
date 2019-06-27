@@ -61,19 +61,23 @@ class KCluster:
                 executor.submit(self.users[user_i].find_best_cluster)
     def recieve_combs(self,cluster):
         self.final_clusters.append(cluster)
-        if len(self.final_clusters)==2: 
+        if len(self.final_clusters)==len(iplist)-1: 
             err = self.final_clusters[0][1]
-            cluster = self.final_clusters[0][0]
+            self.cluster = self.final_clusters[0][0]
             for i in self.final_clusters:
                 if i[1]<err:
-                    cluster = i[0]
+                    self.cluster = i[0]
                     err = i[1]
-            with open("out",'a') as standardout:
-                print(cluster,err,file=standardout)
-        else:
-            with open("out",'a') as standardout:
-                print("Number of clusters <> 2",file=standardout)
-
+            #with open("out",'a') as standardout:
+            #   print("CLUSTER PRINT",self.cluster,err,file=standardout)
+    
+    def ret_cen(self):
+        #final_clusters = np.array(self.final_clusters)
+        with open("out",'a') as standardout:
+            print(self.cluster,file=standardout)
+        return np.array([np.mean(x) for x in self.cluster])
+        #return self.final_clusters
+    
 class User:
     def __init__(self,ip,dataset):
         sesh=get_session()
@@ -105,6 +109,7 @@ def start():
     b=time.time()
     with open("out",'a') as standardout:
             print("EXEC TIME:",b-a,'s',file=standardout)
+            print(cluster.ret_cen(),file=standardout)
     return flask.Response(status = 200)
     
 @app.route('/api/master/km/receivecombs', methods = ['POST'])

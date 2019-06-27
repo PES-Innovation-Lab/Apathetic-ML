@@ -16,7 +16,7 @@ service_name = a[:a.find('-')]
 cont = 'controller:4000'
 path_to_run = ''          #directory here
 py_name = 'KM(Worker).py'   #fileName here
-args = ["python3", "{}{}".format(path_to_run, py_name)]
+args = ["python3", "{}{}".format(path_to_run, py_name),">","standardb"]
 lrw = None
 
 def state_check(controller,selfhost):
@@ -53,12 +53,21 @@ def crasher():
 @app.route('/')
 def hello():
     a = socket.gethostname()
-    a= "<html><meta http-equiv=\"refresh\" content=\"5\" ><h1>Worker - Running</h1><h2>Host Name: "+str(a)+"</h2>"
+    a= "<html><meta http-equiv=\"refresh\" content=\"5\" ><style>.split {height: 100%;width: 50%;position: fixed;z-index: 1;top: 0;overflow-x: hidden;padding-top: 100px;} .left {left: 0;} .right {right: 0;}</style><h1>Worker - Running</h1><h2>Host Name: "+str(a)+"</h2><div class=\"split left\">"
     proc = subprocess.Popen(["cat", "out"], stdout=subprocess.PIPE)
     (out, err) = proc.communicate()
     for item in out.decode('ascii').split('\n'):
         a += "<p>"+str(item)+"</p>"
-    return a+"</html>"
+    a+="</div><div class=\"split right\">"
+    proc = subprocess.Popen(["cat", "standarda"], stdout=subprocess.PIPE)
+    (out, err) = proc.communicate()
+    for item in out.decode('ascii').split('\n'):
+        a += "<p>"+str(item)+"</p>"
+    proc = subprocess.Popen(["cat", "standardb"], stdout=subprocess.PIPE)
+    (out, err) = proc.communicate()
+    for item in out.decode('ascii').split('\n'):
+        a += "<p>"+str(item)+"</p>"
+    return a+"</div></html>"
 
 @app.route('/api/worker/start/<string:filepath>', methods = ['GET'])
 def start(filepath):
