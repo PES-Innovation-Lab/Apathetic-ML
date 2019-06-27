@@ -39,9 +39,9 @@ print('Creating cluster on GCP..')
 subprocess.call('make -f clusters.makefile create',shell=True)
 print('Cluster created on GCP!')
 
-print('First bash script running')
+print('Setup started')
 subprocess.call('./deploy_all.sh',shell=True)
-print('First bash script ending')
+
 
 
 
