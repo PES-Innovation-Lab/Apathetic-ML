@@ -35,14 +35,15 @@ def worker_add(file):
 worker_add('deploy_creator.yaml')
 worker_add('svc_create.yaml')
 
+print('Creating cluster on GCP..')
+subprocess.call('make -f clusters.makefile create',shell=True)
+print('Cluster created on GCP!')
+
 print('First bash script running')
 subprocess.call('./deploy_all.sh',shell=True)
 print('First bash script ending')
 
 
-print('Creating cluster on GCP..')
-subprocess.call('make -f clusters.makefile create',shell=True)
-print('Cluster created on GCP!')
 
 
 
