@@ -59,9 +59,10 @@ def start(workers):
             initw.start()                   #start lr(worker) api
             time.sleep(2)
         url='http://localhost:5000/api/master/lr/start' + '/'+str(workers)
-
-        initmodel = threading.Thread(target=sesh.get, args=(url,))
-        initmodel.start()               #begin training
+        
+        #initmodel = threading.Thread(target=sesh.get, args=(url,))
+        #initmodel.start()               #begin training
+        sesh.get(url)
         return flask.Response(status=202)   #code:accepted
 
 @app.route('/api/master/stop', methods = ['GET'])

@@ -37,7 +37,7 @@ def state_check(controller,selfhost):
                 print("Requesting data from server for restoration.",file=std)
         k = requests.get("http://"+controller+"/api/gimmepath")
         path = k.content;path = path.decode('utf-8')
-        r = requests.get("http://"+selfhost+'/'+'api/worker/start/'+str(path))
+        r = requests.get("http://"+"localhost"+'/'+'api/worker/start/'+str(path))
 
 initw = threading.Thread(target=state_check, args=(cont,service_name+':4000'))
 initw.start()

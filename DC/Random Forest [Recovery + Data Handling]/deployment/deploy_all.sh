@@ -1,5 +1,5 @@
-kubectl apply -f nfs_vol.yaml && \
-kubectl apply -f nfs.yaml &&  \
+#kubectl apply -f nfs_vol.yaml && \
+#kubectl apply -f nfs.yaml &&  \
 kubectl apply -f pvol.yaml && \
 kubectl apply -f pvc.yaml && \
 kubectl apply -f deploy_creator1.yaml
