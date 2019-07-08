@@ -30,7 +30,7 @@ spec:
             - name: local-store
               mountPath: /dev/pers/
           image: altariax0x01/rf_worker_res
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: GET_HOSTS_FROM
               value: dns
@@ -86,7 +86,7 @@ spec:
             - name: local-store
               mountPath: /dev/pers/
           image: altariax0x01/rf_controller
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: GET_HOSTS_FROM
               value: dns
@@ -139,7 +139,7 @@ spec:
             - name: local-store
               mountPath: /dev/pers/
           image: altariax0x01/rf_master_res
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             - name: GET_HOSTS_FROM
               value: dns
