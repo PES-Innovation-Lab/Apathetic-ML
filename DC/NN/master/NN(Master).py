@@ -36,7 +36,8 @@ from flask_cors import CORS
 app = flask.Flask(__name__)
 CORS(app)
 
-iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000"]
+iplist=[]
+s = 'http://worker'
 
 thread_local = threading.local()
 
@@ -126,12 +127,12 @@ class Sequential:
         batch_size_step = batch_size
         
         for epoch_i in range(epochs):
-            
-            print('EPOCH : ' + str(epoch_i + 1))
+            with open("out",'a') as stout:
+                print('EPOCH : ' + str(epoch_i + 1),file=stout)
             
             for step_i in range(self.steps):
-                
-                print('\tSTEP : ' + str(step_i + 1))
+                with open("out",'a') as stout:
+                    print('\tSTEP : ' + str(step_i + 1),file=stout)
 
                 #for user_i in range(self.n_users):
                     
@@ -141,7 +142,8 @@ class Sequential:
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     for user_i in range(self.n_users):
-                        print('\t\tUSER : ' + str(user_i + 1))
+                        with open("out",'a') as stout:
+                            print('\t\tUSER : ' + str(user_i + 1),file=stout)
                         executor.submit(self.users[user_i].fit, X_train_split[user_i][step_i], y_train_split[user_i][step_i], 1, batch_size_step)
 
                 #accuracies = []
@@ -157,8 +159,8 @@ class Sequential:
                         futures.append(executor.submit(self.users[user_i].accuracy_score,X_test,y_test))
                 for i in futures:
                     accuracies.append(i.result())
-                    
-                print('\tACCURACY : ' + str(max(accuracies)))
+                with open("out",'a') as stout:
+                    print('\tACCURACY : ' + str(max(accuracies)),file=stout)
                     
                 self.best_user_id = np.argmax(np.array(accuracies))
                 
@@ -283,13 +285,12 @@ def start():
     y_pred = [np.argmax(i) for i in y_pred]
 
     acc = acc_score(y_test , y_pred)
-
-    print(acc)
-
-    print(time.time()-a)
+    with open("out",'a') as stout:
+        print(acc,file=stout)
+        print(time.time()-a,file=stout)
 
     return flask.Response(status = 200)
 
 if __name__ == '__main__':
 
-    app.run(host='127.0.0.1', port=3000)
+    app.run(host='0.0.0.0', port=5000)
