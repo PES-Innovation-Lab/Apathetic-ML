@@ -6,7 +6,10 @@ import BasicTUI as BT
 import npyscreen
 import os
 x = BT.screen()
-num_workers = int(x[1])
+num_workers = x[0]
+#prints all data from TUI
+for i in x:
+    print(i)
 
 def worker_add(file):
     f = open(file,'r')
@@ -44,13 +47,3 @@ worker_add('svc_create1.yaml')
 
 print('Setup started')
 subprocess.call('./deploy_all.sh',shell=True)
-
-
-
-
-
-
-
-
-
-
