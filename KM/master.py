@@ -13,7 +13,7 @@ args = ["python3", "{}{}".format(path_to_run, py_name)]
 
 lrm=None
 
-iplist=["http://127.0.0.1:3000","http://127.0.0.1:6000"]
+iplist=["http://127.0.0.1:4000","http://127.0.0.1:6000"]
 
 sesh=requests.Session()
 
@@ -33,7 +33,7 @@ def start():
             initw = threading.Thread(target=sesh.get, args=(url,))
             initw.start()                   #start lr(worker) api
             time.sleep(0.5)
-        url='http://127.0.0.1:4000/api/master/km/start'
+        url='http://127.0.0.1:3000/api/master/km/start'
         initmodel = threading.Thread(target=sesh.get, args=(url,))
         initmodel.start()               #begin training
         return flask.Response(status=202)   #code:accepted
