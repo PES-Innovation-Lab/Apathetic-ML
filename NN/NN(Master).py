@@ -35,7 +35,7 @@ from sklearn.metrics import accuracy_score as acc_score
 
 app = flask.Flask(__name__)
 
-iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000"]
+iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000","http://127.0.0.1:9000","http://127.0.0.1:11000","http://127.0.0.1:13000"]
 
 thread_local = threading.local()
 
@@ -47,13 +47,17 @@ def get_session():
 
     return thread_local.session
 
-(X_train,y_train),(X_test,y_test) = mnist.load_data()
+def preprocess():
 
-X_train_flat = X_train.reshape((X_train.shape[0],-1))
+    (X_train,y_train),(X_test,y_test) = mnist.load_data()
 
-X_test_flat  = X_test.reshape((X_test.shape[0],-1))
+    X_train_flat = X_train.reshape((X_train.shape[0],-1))
 
-y_train_oh = keras.utils.to_categorical(y_train,10)
+    X_test_flat  = X_test.reshape((X_test.shape[0],-1))
+
+    y_train_oh = keras.utils.to_categorical(y_train,10)
+
+    return (X_train_flat,y_train_oh),(X_test_flat,y_test)
 
 class Sequential:
     
@@ -75,7 +79,6 @@ class Sequential:
         
             self.model = keras.Sequential()
 
-        #self.users = [User(iplist[_],_) for _ in range(n_users)]
         self.users=[]
         futures=[]
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -188,7 +191,7 @@ class Sequential:
                 
             return self.model.predict(X)
 
-        
+      
 class User:
     
     def __init__(self , ip, user_id = None):
@@ -255,6 +258,8 @@ class User:
     
 @app.route('/api/master/nn/start', methods = ['GET'])
 def start():
+
+    (X_train,y_train),(X_test,y_test) = preprocess()
 
     model = Sequential(n_users = 5 , steps = 5)
 
