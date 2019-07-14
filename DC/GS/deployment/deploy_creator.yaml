@@ -86,7 +86,7 @@ spec:
               mountPath: /dev/shadow/data
             - name: local-store
               mountPath: /dev/pers/
-          image: 192.168.0.10:8080/gs_worker
+          image: 192.168.0.10:8080/gs_master
           imagePullPolicy: Always
           env:
             - name: GET_HOSTS_FROM

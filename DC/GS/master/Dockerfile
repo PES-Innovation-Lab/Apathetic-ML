@@ -1,4 +1,4 @@
-FROM 192.168.0.10:8080/nn_master
+FROM 192.168.0.10:8080/gs_master
 
 WORKDIR /app
 RUN cd /app && rm -r *
@@ -6,6 +6,7 @@ COPY . /app
 #RUN pip3 install --trusted-host pypi.python.org -r requirements.txt
 #RUN apt-get -y install python3-pip
 #RUN apt-get -y install python3-pip
+#yRUN pip3 install tensorflow==1.5 keras
 EXPOSE 4000 5000 873 22
 
 ENV NAME ApatheticML

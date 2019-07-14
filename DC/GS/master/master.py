@@ -5,6 +5,7 @@ import time
 import threading
 import os
 from flask_cors import CORS
+import socket
 app = flask.Flask(__name__)
 CORS(app)
 path_to_run = './'          #directory here
@@ -16,7 +17,7 @@ os.system("touch out")
 iplist=[]
 s = "http://worker"
 sesh=requests.Session()
-
+os.system("touch out")
 @app.route('/')
 def hello():
     a = socket.gethostname()
@@ -33,19 +34,20 @@ def start(workers):
     global sesh
     global iplist,s
     iplist = [s+str(i)+':4000' for i in range(0,int(workers))]
-
+    with open('out','a') as stout:
+            print("Number of workers: ",str(workers),file=stout)
     if lrm is not None:    #if process is running
         return flask.Response(status=409)   #code:conflict
     else:                   #process never run    
         lrm=subprocess.Popen(args)     #start lr(master) api
-        time.sleep(3)
+        time.sleep(2)
         for ip in iplist:
-            url = ip+'/api/worker/begin'
+            url = ip+'/api/worker/start'
             initw = threading.Thread(target=sesh.get, args=(url,))
             initw.start()                   #start lr(worker) api
-            time.sleep(3)
-        time.sleep(3)
-        url='http://localhost:5000/api/master/gs/start/'+str(workers)
+            time.sleep(2)
+        time.sleep(2)
+        url='http://master:5000/api/master/gs/start/'+str(workers)
         initmodel = threading.Thread(target=sesh.get, args=(url,))
         initmodel.start()               #begin training
         return flask.Response(status=202)   #code:accepted

@@ -33,6 +33,7 @@ def get_session():
     return thread_local.session
 
 def preprocess():
+    global X_train,y_train,X_test,y_test,X_train_flat,X_test_flat,y_train_oh
     (X_train,y_train),(X_test,y_test) = mnist.load_data()
 
     X_train_flat = X_train.reshape((X_train.shape[0],-1))
@@ -114,6 +115,7 @@ class GridSearch:
                 for j in range(self.n_users):
                     
                     futures.append(executor.submit(self.users[j].fit, self.X_train , self.y_train , self.X_test , self.y_test , i + j*model_per_user , self.feed_list_model[i + j*model_per_user] , batch_size , n_epochs))
+                    
             for i in futures:
                 acc.append(i.result())        
                 
@@ -140,8 +142,8 @@ class User:
 
         url = self.ip+'/api/worker/gs/userfit' 
 
-        r=sesh.post(url,json={'X_test':X_test.tolist(), 'y_test':y_test.tolist(), 'X_train':X_train.tolist() , 'y_train':y_train.tolist() , 'model':model , 'feed':feed , 'batch_size':batch_size , 'n_epochs':n_epochs})
-
+        #r=sesh.post(url,json={'X_test':X_test.tolist(), 'y_test':y_test.tolist(), 'X_train':X_train.tolist() , 'y_train':y_train.tolist() , 'model':model , 'feed':feed , 'batch_size':batch_size , 'n_epochs':n_epochs})
+        r=sesh.post(url,json={'model':model , 'feed':feed , 'batch_size':batch_size , 'n_epochs':n_epochs})
         return (r.json()['acc'],r.json()['feed'])
         
 

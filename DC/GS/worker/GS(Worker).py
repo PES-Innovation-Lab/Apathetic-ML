@@ -2,19 +2,22 @@ import flask
 import numpy as np
 import json
 from flask_cors import CORS
-
+import sys
 app = flask.Flask(__name__)
 CORS(app)
 user=None
+sys.stdout = open('out','w')
 def imports():
-    global acc_score,Graph,Session,load_model,model_from_json,K
+    global acc_score,Graph,Session,load_model,model_from_json,K,mnist,keras
+    import keras
     from sklearn.metrics import accuracy_score as acc_score
     from tensorflow import Graph , Session
     from keras.models import load_model
     from keras.models import model_from_json
     from keras import backend as K
-    with open('out','a') as stout:
-        print("[INFO] Imports complete",file = stout)
+    from keras.datasets import mnist
+    #with open('out','a') as stout:
+    print("[INFO] Imports complete")
 
 class User:
     def __init__(self):
@@ -69,14 +72,21 @@ def userinit():
 def accuracyscore():
 
     global user
+    global mnist
+    # X_test=np.array(flask.request.json['X_test'])
 
-    X_test=np.array(flask.request.json['X_test'])
-
-    y_test=np.array(flask.request.json['y_test'])
+    # y_test=np.array(flask.request.json['y_test'])
     
-    X_train=np.array(flask.request.json['X_train'])
+    # X_train=np.array(flask.request.json['X_train'])
 
-    y_train=np.array(flask.request.json['y_train'])
+    # y_train=np.array(flask.request.json['y_train'])
+    (X_train,y_train),(X_test,y_test) = mnist.load_data()
+
+    X_train_flat = X_train.reshape((X_train.shape[0],-1))
+
+    X_test_flat  = X_test.reshape((X_test.shape[0],-1))
+
+    y_train_oh = keras.utils.to_categorical(y_train,10)
     
     model=flask.request.json['model']
     
@@ -86,10 +96,11 @@ def accuracyscore():
     
     n_epochs=flask.request.json['n_epochs']
 
-    (acc , feed)=user.fit(X_train , y_train , X_test , y_test , model , feed , batch_size , n_epochs)
+    (acc , feed)=user.fit(X_train_flat , y_train_oh , X_test_flat , y_test , model , feed , batch_size , n_epochs)
 
     return flask.Response(json.JSONEncoder().encode({'acc':acc,'feed':feed}),mimetype='application/json',status = 200)
     
 if __name__ == '__main__':
 
     app.run(host='0.0.0.0', port=5000)
+    sys.stdout.close()
