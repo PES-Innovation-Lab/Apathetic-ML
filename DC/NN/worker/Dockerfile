@@ -1,4 +1,4 @@
-FROM altariax0x01/km_worker_res
+FROM altariax0x01/nn_master
 
 WORKDIR /app
 RUN cd /app && rm -r *

@@ -49,7 +49,7 @@ class User:
 
         with self.graph.as_default():
     
-            json_file = open('model.json', 'r')
+            json_file = open('/dev/core/model.json', 'r')
 
             loaded_model_json = json_file.read()
 
@@ -57,7 +57,7 @@ class User:
 
             loaded_model = model_from_json(loaded_model_json)
 
-            loaded_model.load_weights("model.h5")
+            loaded_model.load_weights("/dev/core/model.h5")
 
             self.model = loaded_model
 
@@ -93,7 +93,7 @@ class User:
 
         with self.graph.as_default():
         
-            self.model.save_weights('best_model.h5')
+            self.model.save_weights('/dev/core/best_model.h5')
     
     def update_model(self):
 
@@ -101,7 +101,7 @@ class User:
 
         with self.graph.as_default():
     
-            self.model.load_weights('best_model.h5')
+            self.model.load_weights('/dev/core/best_model.h5')
 
         
 @app.route('/api/worker/nn/userinit', methods = ['POST'])

@@ -19,29 +19,6 @@ py_name = 'NN(Worker).py'   #fileName here
 args = ["python3", "{}{}".format(path_to_run, py_name)]
 lrw = None
 
-def state_check(controller,selfhost):
-    ret = 'x'
-    while (ret != '1' and ret != '0' ):
-            try:
-                    r = requests.get("http://"+controller+'/'+'api/check/state')
-                    ret = r.content
-                    ret = ret.decode("utf-8")
-            except:
-                    with open("out",'a') as std:
-                            print("Request for state check to controller has failed",file=std)
-            time.sleep(2)
-    with open("out",'a') as std:
-            print("State check complete. State is "+ret,file=std)
-    if (ret == '1'):
-        with open("out",'a') as std:
-                print("Requesting data from server for restoration.",file=std)
-        k = requests.get("http://"+controller+"/api/gimmepath")
-        path = k.content;path = path.decode('utf-8')
-        r = requests.get("http://"+"localhost:4000"+'/'+'api/worker/start/'+str(path))
-
-initw = threading.Thread(target=state_check, args=(cont,service_name+':4000'))
-initw.start()
-
 @app.route("/crash")
 def crasher():
         #As the name suggests, python process = dead
@@ -60,23 +37,23 @@ def hello():
         a += "<p>"+str(item)+"</p>"
     return a+"</div></html>"
 
-@app.route('/api/worker/start/<string:filepath>', methods = ['GET'])
-def start(filepath):
-    #begins processing, first ask for a file, then copy it to local mem for now
-    with open("out",'a') as std:
-        print("Worker is starting now",file=std)
-    a = socket.gethostname()
-    url = 'http://controller:4000/api/gimmedata/' + str(a)
-    r = requests.get(url)
-    file_to_be_used = r.content
-    file_to_be_used = file_to_be_used.decode("utf-8") 
-    with open("out",'a') as std:
-        print("Allocated: ",file_to_be_used,file=std)
-    proc = subprocess.Popen(["cp",'/dev/core/data/'+str(file_to_be_used),'/app/'+filepath],stdout=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    with open("out",'a') as std:
-        print("Output:",str(out.decode('ascii')),"Stderr:",str(err.decode('ascii')),file=std)
-    return flask.Response(status=200)
+# @app.route('/api/worker/start/<string:filepath>', methods = ['GET'])
+# def start(filepath):
+#     #begins processing, first ask for a file, then copy it to local mem for now
+#     with open("out",'a') as std:
+#         print("Worker is starting now",file=std)
+#     #a = socket.gethostname()
+#     # url = 'http://controller:4000/api/gimmedata/' + str(a)
+#     # r = requests.get(url)
+#     # file_to_be_used = r.content
+#     # file_to_be_used = file_to_be_used.decode("utf-8") 
+#     # with open("out",'a') as std:
+#     #     print("Allocated: ",file_to_be_used,file=std)
+#     # proc = subprocess.Popen(["cp",'/dev/core/data/'+str(file_to_be_used),'/app/'+filepath],stdout=subprocess.PIPE)
+#     # (out, err) = proc.communicate()
+#     # with open("out",'a') as std:
+#     #     print("Output:",str(out.decode('ascii')),"Stderr:",str(err.decode('ascii')),file=std)
+#     # return flask.Response(status=200)
 
 @app.route('/api/worker/begin')
 def begin():
@@ -87,6 +64,7 @@ def begin():
         with open("out",'a') as std:
             print("[BEGIN]",file=std)
         lrw=subprocess.Popen(args)
+        time.sleep(15)
         return flask.Response(status=202)
 
 @app.route('/api/worker/stop', methods = ['GET'])

@@ -41,20 +41,21 @@ def start(workers):
     
     iplist = [s+str(i)+':4000' for i in range(0,int(workers))]
    
-     if lrm is not None:    #if process is running
+    if lrm is not None:    #if process is running
         return flask.Response(status=409)   #code:conflict
     else:                   #process never run    
         lrm=subprocess.Popen(args)     #start lr(master) api
-        time.sleep(3)
+        time.sleep(15)
         for ip in iplist:
             url = ip+'/api/worker/begin'
             initw = threading.Thread(target=sesh.get, args=(url,))
             initw.start()                   #start lr(worker) api
-            time.sleep(3)
+            time.sleep(30)
         time.sleep(10)
-        url='http://localhost:5000/api/master/nn/start'
-        initmodel = threading.Thread(target=sesh.get, args=(url,))
-        initmodel.start()               #begin training
+        url='http://localhost:5000/api/master/nn/start/'+str(len(iplist))
+        #initmodel = threading.Thread(target=sesh.get, args=(url,))
+        #initmodel.start()               #begin training
+        requests.get(url)
         return flask.Response(status=202)   #code:accepted
 
 @app.route('/api/master/stop', methods = ['GET'])

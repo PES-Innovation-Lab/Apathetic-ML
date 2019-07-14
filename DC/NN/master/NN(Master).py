@@ -48,6 +48,8 @@ def get_session():
         thread_local.session = requests.Session()
 
     return thread_local.session
+with open("out",'a') as stout:
+    print("Loading Dataset",file=stout)
 
 (X_train,y_train),(X_test,y_test) = mnist.load_data()
 
@@ -81,8 +83,8 @@ class Sequential:
         self.users=[]
         futures=[]
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            for _ in range(n_users):
-                futures.append(executor.submit(User,iplist[_],_))
+            for v in range(n_users):
+                futures.append(executor.submit(User,iplist[v],v))
         for i in futures:
             self.users.append(i.result())
             
@@ -104,11 +106,11 @@ class Sequential:
 
             model_json = self.model.to_json()
 
-            with open("model.json", "w") as json_file:
+            with open("/dev/core/model.json", "w") as json_file:
 
                 json_file.write(model_json)
 
-            self.model.save_weights("model.h5")
+            self.model.save_weights("/dev/core/model.h5")
 
             #for _ in range(self.n_users):
                 
@@ -181,7 +183,7 @@ class Sequential:
 
         with self.graph.as_default():
 
-            self.model.load_weights('best_model.h5')
+            self.model.load_weights('/dev/core/best_model.h5')
      
     def predict(self , X):
 
@@ -256,10 +258,13 @@ class User:
         
 
     
-@app.route('/api/master/nn/start', methods = ['GET'])
-def start():
-
-    model = Sequential(n_users = 5 , steps = 5)
+@app.route('/api/master/nn/start/<string:workers>', methods = ['GET'])
+def start(workers):
+    global iplist
+    global s
+    
+    iplist = [s+str(i)+':5000' for i in range(0,int(workers))]
+    model = Sequential(n_users = int(workers) , steps = 5)
 
     model.add(Dense(input_dim = 784 , units = 256 , activation = 'sigmoid'))
 
