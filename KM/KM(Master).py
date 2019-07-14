@@ -11,9 +11,6 @@ import time
 
 app = flask.Flask(__name__)
 
-# import dataset and assign number of clusters
-#dataset = np.asarray([[2,1],[2,2],[3,1],[3,2],[7,5],[7,6],[8,5],[8,6]])
-# k = 2
 dataset = pd.read_csv('cars.csv')
 dataset = dataset.iloc[:,0:7].values
 dataset = np.array([np.array([int(j)for j in i])  for i in dataset if '' or ' ' not in i])
@@ -55,7 +52,7 @@ class KCluster:
                 executor.submit(self.users[user_i].find_best_cluster)
     def recieve_combs(self,cluster):
         self.final_clusters.append(cluster)
-        if len(self.final_clusters)==2: 
+        if len(self.final_clusters)==2:
             err = self.final_clusters[0][1]
             cluster = self.final_clusters[0][0]
             for i in self.final_clusters:
@@ -63,6 +60,11 @@ class KCluster:
                     cluster = i[0]
                     err = i[1]
             print(cluster,err)
+    def ret_cen(self):
+        return np.array([np.mean(x) for x in self.final_clusters])
+    def predict(self,X):
+        return np.argmin(np.square(self.ret_cen() - X)) + 1
+
 
 
 class User:
@@ -109,5 +111,5 @@ def recievecombs():
     
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=4000)
+    app.run(host='127.0.0.1', port=3000)
 

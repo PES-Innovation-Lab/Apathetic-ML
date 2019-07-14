@@ -6,21 +6,25 @@ import numpy as np
 
 import json
 
-from keras import *
 
-from keras import backend as K
 
 from sklearn.metrics import accuracy_score as acc_score
 
-import tensorflow as tf
+def imports():
 
-from keras.layers import Dense
+    from keras import *
 
-from tensorflow import Graph , Session
+    from keras import backend as K
 
-from keras.models import load_model
+    import tensorflow as tf
 
-from keras.models import model_from_json
+    from keras.layers import Dense
+
+    from tensorflow import Graph , Session
+
+    from keras.models import load_model
+
+    from keras.models import model_from_json
 
 tf.reset_default_graph()
 
@@ -108,6 +112,8 @@ class User:
 def userinit():
 
     global user
+
+    imports()
 
     user_id=flask.request.json['user_id']
 

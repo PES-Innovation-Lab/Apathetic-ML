@@ -1,15 +1,23 @@
 
 import flask
 import requests
-import numpy
 import numpy as np
 from copy import deepcopy
+import threading
+import concurrent.futures
 
 app = flask.Flask(__name__)
 
 user=None
 
-sesh=requests.Session()
+iplist=["http://127.0.0.1:9000","http://127.0.0.1:11000"]
+
+thread_local = threading.local()
+
+def get_session():
+    if not hasattr(thread_local, "session"):
+        thread_local.session = requests.Session()
+    return thread_local.session
 
 
 class User:
@@ -50,17 +58,28 @@ class User:
         new_means = [np.mean(i) for i in clusters]
         return new_means
     def classify_cluster(self,means):
-        cluster = [[] for i in means]
-        for i in self.dataset:
-            min_err = np.square(i-means[0]).mean()
-            mean = 0
-            for j in range(len(means)):
-                if (min_err>np.square(i-means[j]).mean()):
-                    min_err = np.square(i-means[j]).mean()
-                    mean = j
-            cluster[mean].append(i)
-        return np.array(cluster)
+        global iplist
+        dataset_batches=np.split(self.dataset,len(iplist))
+        futures=[]
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            for user_i in range(len(iplist)):
+                futures.append(executor.submit(classify,dataset_batches[user_i],means,iplist[user_i]))
+        a=futures[0].result()
+        for i in range(len(means)):
+            for j in range(1,len(futures)):
+                a[i].extend(futures[j].result()[i])
+        return np.array(a)
 
+
+
+def classify(dataset,means,ip):
+    global sesh
+    print(means)
+    sesh=get_session()
+    url = ip+'/api/subworker/km/classify'
+    dataset=dataset.tolist()
+    r=sesh.post(url,json={'dataset':dataset,'means':np.array(means).tolist()})
+    return r.json()['cluster']
 
 @app.route('/api/worker/km/userinit', methods = ['POST'])
 def userinit():
@@ -90,7 +109,7 @@ def fitmodel():
                 temp11.append(k)
             temp1.append(temp11)
         cluster.append(temp1)
-    url = 'http://127.0.0.1:4000/api/master/km/recievecombs'
+    url = 'http://127.0.0.1:3000/api/master/km/recievecombs'
     sesh.post(url,json={'clusters':cluster,'err':err})
     return flask.Response(status = 200)
     

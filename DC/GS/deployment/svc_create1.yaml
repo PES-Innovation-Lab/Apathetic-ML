@@ -1,0 +1,174 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker0
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  - name: files
+    port: 22
+    targetPort: 22
+  - name: rsync
+    port: 873
+    targetPort: 873
+  selector:
+    target: worker0
+  type: LoadBalancer
+
+---
+#new worker
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker1
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  - name: files
+    port: 22
+    targetPort: 22
+  - name: rsync
+    port: 873
+    targetPort: 873
+  selector:
+    target: worker1
+  #type: LoadBalancer
+
+---
+#new worker
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker2
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  - name: files
+    port: 22
+    targetPort: 22
+  - name: rsync
+    port: 873
+    targetPort: 873
+  selector:
+    target: worker2
+  #type: LoadBalancer
+
+---
+#new worker
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker3
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  - name: files
+    port: 22
+    targetPort: 22
+  - name: rsync
+    port: 873
+    targetPort: 873
+  selector:
+    target: worker3
+  #type: LoadBalancer
+
+---
+#new worker
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker4
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  - name: files
+    port: 22
+    targetPort: 22
+  - name: rsync
+    port: 873
+    targetPort: 873
+  selector:
+    target: worker4
+  #type: LoadBalancer
+
+---
+#new worker
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker5
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  - name: files
+    port: 22
+    targetPort: 22
+  - name: rsync
+    port: 873
+    targetPort: 873
+  selector:
+    target: worker5
+  #type: LoadBalancer
+
+---
+#new worker
+#master code
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: master
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  - name: files
+    port: 22
+    targetPort: 22
+  - name: rsync
+    port: 873
+    targetPort: 873
+  selector:
+    target: master
+  type: LoadBalancer
+

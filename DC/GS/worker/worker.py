@@ -1,50 +1,42 @@
-
 import flask
-import requests
 import subprocess
-import time
-import threading
-
+from flask_cors import CORS
+import socket
+import os
+import sys
 app = flask.Flask(__name__)
-
+CORS(app)
 path_to_run = './'          #directory here
-py_name = 'KM(Worker1).py'   #fileName here
+py_name = 'GS(Worker).py'   #fileName here
 args = ["python3", "{}{}".format(path_to_run, py_name)]
 
 lrw=None
-
-iplist=["http://127.0.0.1:8000","http://127.0.0.1:10000"]
-
-sesh=requests.Session()
-
+os.system("touch out")
+@app.route('/')
+def hello():
+    a = socket.gethostname()
+    a= "<html><meta http-equiv=\"refresh\" content=\"5\" ><style>.split {height: 100%;width: 50%;position: fixed;z-index: 1;top: 0;overflow-x: hidden;padding-top: 100px;} .left {left: 0;} .right {right: 0;}</style><h1>Worker - Running</h1><h2>Host Name: "+str(a)+"</h2><div class=\"split left\">"
+    proc = subprocess.Popen(["tac", "out"], stdout=subprocess.PIPE)
+    (out, err) = proc.communicate()
+    lines = out.decode('ascii').split('\n')
+    for item in lines[:20]:
+        a += "<p>"+str(item)+"</p>"
+    return a+"</div></html>"
 
 @app.route('/api/worker/start', methods = ['GET'])
 def start():
     global lrw
-    global sesh
-    global iplist
+    global output
     if lrw is not None:    #if process is running or has run before
         return flask.Response(status=409)   #code:conflict
     else:                   #process never run    
         lrw=subprocess.Popen(args)
-        time.sleep(0.5)
-        for ip in iplist:
-            url = ip+'/api/subworker/start'
-            initw = threading.Thread(target=sesh.get, args=(url,))
-            initw.start()                   #start lr(worker) api
-            time.sleep(0.5)
         return flask.Response(status=202)   #code:accepted
 
 @app.route('/api/worker/stop', methods = ['GET'])
 def stop():
     global lrw
-    global sesh
-    global iplist
     if lrw is not None:    #if process is running or has completed
-        for ip in iplist:
-            url = ip+'/api/subworker/stop'
-            stopw = threading.Thread(target=sesh.get, args=(url,))
-            stopw.start()
         lrw.terminate()
         lrw=None
         return flask.Response(status=200)   #code:ok
@@ -53,5 +45,5 @@ def stop():
 
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=4000)
+    app.run(host='0.0.0.0', port=4000)
 
