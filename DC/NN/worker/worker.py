@@ -37,24 +37,6 @@ def hello():
         a += "<p>"+str(item)+"</p>"
     return a+"</div></html>"
 
-# @app.route('/api/worker/start/<string:filepath>', methods = ['GET'])
-# def start(filepath):
-#     #begins processing, first ask for a file, then copy it to local mem for now
-#     with open("out",'a') as std:
-#         print("Worker is starting now",file=std)
-#     #a = socket.gethostname()
-#     # url = 'http://controller:4000/api/gimmedata/' + str(a)
-#     # r = requests.get(url)
-#     # file_to_be_used = r.content
-#     # file_to_be_used = file_to_be_used.decode("utf-8") 
-#     # with open("out",'a') as std:
-#     #     print("Allocated: ",file_to_be_used,file=std)
-#     # proc = subprocess.Popen(["cp",'/dev/core/data/'+str(file_to_be_used),'/app/'+filepath],stdout=subprocess.PIPE)
-#     # (out, err) = proc.communicate()
-#     # with open("out",'a') as std:
-#     #     print("Output:",str(out.decode('ascii')),"Stderr:",str(err.decode('ascii')),file=std)
-#     # return flask.Response(status=200)
-
 @app.route('/api/worker/begin')
 def begin():
     global lrw

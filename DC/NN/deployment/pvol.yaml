@@ -12,7 +12,7 @@ spec:
     - ReadWriteMany
   nfs:
     server: 192.168.0.12
-    path: "/mnt/shadow"
+    path: "/mnt/core"
     readOnly: false
 
 ---
@@ -30,7 +30,7 @@ spec:
     - ReadWriteMany
   nfs:
     server: 192.168.0.12
-    path: "/mnt/core"
+    path: "/mnt/shadow"
     readOnly: false
 
 ---

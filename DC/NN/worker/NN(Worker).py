@@ -1,28 +1,19 @@
 import flask
-
 import requests
-
 import numpy as np
-
 import json
-
+from sklearn.metrics import accuracy_score as acc_score
 from keras import *
 
-from keras import backend as K
-
-from sklearn.metrics import accuracy_score as acc_score
-
-import tensorflow as tf
-
-from keras.layers import Dense
-
-from tensorflow import Graph , Session
-
-from keras.models import load_model
-
-from keras.models import model_from_json
-from flask_cors import CORS
-tf.reset_default_graph()
+def imports():
+    global keras, K,tf,Dense,Graph,Session,load_model,model_from_json
+    from keras import backend as K
+    import tensorflow as tf
+    from keras.layers import Dense
+    from tensorflow import Graph , Session
+    from keras.models import load_model
+    from keras.models import model_from_json
+    tf.reset_default_graph()
 
 app = flask.Flask(__name__)
 CORS(app)
@@ -108,7 +99,7 @@ class User:
 def userinit():
 
     global user
-
+    imports()
     user_id=flask.request.json['user_id']
 
     user=User(user_id)

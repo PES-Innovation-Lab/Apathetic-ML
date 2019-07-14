@@ -1,34 +1,14 @@
 import numpy as np
 
-import keras
- 
-from keras import Sequential
-
-from keras.layers import Dense
-
-from keras.datasets import mnist
-
 import requests
 
 import flask
 
 import threading
 
-import tensorflow as tf
-
-from keras import backend as K
-
-from keras.models import model_from_json
-
-from keras.models import load_model
-
 import concurrent.futures
 
-from tensorflow import Graph , Session
-
 import time
-
-tf.reset_default_graph()
 
 from sklearn.metrics import accuracy_score as acc_score
 
@@ -48,16 +28,36 @@ def get_session():
         thread_local.session = requests.Session()
 
     return thread_local.session
-with open("out",'a') as stout:
-    print("Loading Dataset",file=stout)
+def imports():
+    global keras, Sequential,Dense,mnist,tf,K,model_from_json,load_model,Graph,Session
+    import keras
+    from keras import Sequential
+    from keras.layers import Dense
+    from keras.datasets import mnist
+    import tensorflow as tf
+    from keras import backend as K
+    from keras.models import model_from_json
+    from keras.models import load_model
+    from tensorflow import Graph , Session
+    tf.reset_default_graph()
 
-(X_train,y_train),(X_test,y_test) = mnist.load_data()
+def preprocess():
+    with open("out",'a') as stout:
+        print("Beginning preprocessing",file=stout)
+    (X_train,y_train),(X_test,y_test) = mnist.load_data()
 
-X_train_flat = X_train.reshape((X_train.shape[0],-1))
+    with open("out",'a') as stout:
+        print("Data Loaded",file=stout)
 
-X_test_flat  = X_test.reshape((X_test.shape[0],-1))
+    X_train_flat = X_train.reshape((X_train.shape[0],-1))
 
-y_train_oh = keras.utils.to_categorical(y_train,10)
+    X_test_flat  = X_test.reshape((X_test.shape[0],-1))
+
+    y_train_oh = keras.utils.to_categorical(y_train,10)
+    with open("out",'a') as stout:
+        print("Preprocessing complete",file=stout)
+
+    return (X_train_flat,y_train_oh),(X_test_flat,y_test)
 
 class Sequential:
     
@@ -260,10 +260,15 @@ class User:
     
 @app.route('/api/master/nn/start/<string:workers>', methods = ['GET'])
 def start(workers):
-    global iplist
     global s
-    
+    global iplist
+
     iplist = [s+str(i)+':5000' for i in range(0,int(workers))]
+    imports()
+    with open("out","a") as stout:
+        print("Imports completed",file=stout)
+    (X_train,y_train),(X_test,y_test) = preprocess()
+    
     model = Sequential(n_users = int(workers) , steps = 5)
 
     model.add(Dense(input_dim = 784 , units = 256 , activation = 'sigmoid'))
@@ -296,6 +301,8 @@ def start(workers):
 
     return flask.Response(status = 200)
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
 
-    app.run(host='0.0.0.0', port=5000)
+    #app.run(host='0.0.0.0', port=5000)
+imports()
+(X_train,y_train),(X_test,y_test) = preprocess()

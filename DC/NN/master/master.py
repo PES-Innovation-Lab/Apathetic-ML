@@ -52,10 +52,16 @@ def start(workers):
             initw.start()                   #start lr(worker) api
             time.sleep(30)
         time.sleep(10)
+<<<<<<< Updated upstream
         url='http://localhost:5000/api/master/nn/start/'+str(len(iplist))
         #initmodel = threading.Thread(target=sesh.get, args=(url,))
         #initmodel.start()               #begin training
         requests.get(url)
+=======
+        url='http://localhost:5000/api/master/nn/start/' + str(workers)
+        initmodel = threading.Thread(target=sesh.get, args=(url,))
+        initmodel.start()               #begin training
+>>>>>>> Stashed changes
         return flask.Response(status=202)   #code:accepted
 
 @app.route('/api/master/stop', methods = ['GET'])
