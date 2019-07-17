@@ -33,6 +33,7 @@ s = 'http://worker'
 wb = []
 #CS
 producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
+topics=['m2w1','m2w2']
 
 #iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000","http://127.0.0.1:9100","http://127.0.0.1:11100","http://127.0.0.1:13000"]
 #thread_local = threading.local()
@@ -50,7 +51,7 @@ class LinearRegressor:
         self.learning_rate = learning_rate
     def fit(self,train_dataset,train_y,X_test,y_test,n_iters = 200,batch_size = 200):
         #CS        
-        #global iplist
+        global topics
         global producer
         #CE
         self.number_of_weights = train_dataset.shape[1]
@@ -62,7 +63,7 @@ class LinearRegressor:
         self.train_dataset_user_batches = numpy.split(self.train_dataset,self.n_users)
         self.train_y_user_batches = numpy.split(self.train_y,self.n_users)
         #CS
-        self.users = [User(learning_rate = self.learning_rate) for user in range(self.n_users)]
+        self.users = [User(learning_rate = self.learning_rate,topic=topics[user]) for user in range(self.n_users)]
         producer.flush()
         #CE
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -116,16 +117,17 @@ class LinearRegressor:
 
 #CS
 class User:
-    def __init__(self,learning_rate=0.1):
+    def __init__(self,learning_rate=0.1,topic):
         global producer
+        self.topic=topic
         #sesh=get_session()
         #self.ip=ip
         #url = self.ip+'/api/worker/lr/userinit'
         #sesh.post(url,json={'learning_rate':learning_rate})
-        producer.send('m2w',{'fun':'userinit','learning_rate':learning_rate})
+        producer.send(self.topic,{'fun':'userinit','learning_rate':learning_rate})
     def init_model(self,train_dataset,train_y,batch_size):
         global producer
-        producer.send('m2w',{'fun':'initmodel','batch_size':batch_size})
+        producer.send(self.topic,{'fun':'initmodel','batch_size':batch_size})
         #sesh=get_session()     
         #url = self.ip+'/api/worker/lr/initmodel'       #send train dataset and labels to worker nodes
         #sesh.post(url,json={'train_dataset':train_dataset.tolist(),'train_y':train_y.tolist(),'batch_size':batch_size})
@@ -141,7 +143,7 @@ class User:
         #url = self.ip+'/api/worker/lr/fitmodel'
         #sesh.post(url,json={'weights':weights.tolist(),'biases':biases,'step':step})        #send weights and biases and recieve weights and biases
         global producer
-        producer.send('m2w',{'fun':'fitmodel','weights':weights.tolist(),'biases':biases,'step':step})
+        producer.send(self.topic,{'fun':'fitmodel','weights':weights.tolist(),'biases':biases,'step':step})
         '''
         y_pred = self.train_dataset[self.batch_size*step : self.batch_size*step + self.batch_size]@self.weights + self.biases
         mse_loss_grad = (y_pred-self.train_y[self.batch_size*step : self.batch_size*step + self.batch_size].reshape(self.batch_size,1))/self.batch_size
