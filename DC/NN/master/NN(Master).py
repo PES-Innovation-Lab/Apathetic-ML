@@ -59,13 +59,13 @@ def preprocess():
 
     return (X_train_flat,y_train_oh),(X_test_flat,y_test)
 
-class Sequential:
+class CustSequential:
     
-    def __init__(self , n_users , steps):
+    def __init__(self , n_users , num_steps):
         
         self.n_users = n_users
         
-        self.steps = steps
+        self.steps = num_steps
 
         self.graph = Graph()
 
@@ -144,8 +144,8 @@ class Sequential:
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     for user_i in range(self.n_users):
-                        with open("out",'a') as stout:
-                            print('\t\tUSER : ' + str(user_i + 1),file=stout)
+                        #with open("out",'a') as stout:
+                            #print('\t\tUSER : ' + str(user_i + 1),file=stout)
                         executor.submit(self.users[user_i].fit, X_train_split[user_i][step_i], y_train_split[user_i][step_i], 1, batch_size_step)
 
                 #accuracies = []
@@ -267,9 +267,9 @@ def start(workers):
     imports()
     with open("out","a") as stout:
         print("Imports completed",file=stout)
-    (X_train,y_train),(X_test,y_test) = preprocess()
+    (X_train_flat,y_train_oh),(X_test_flat,y_test) = preprocess()
     
-    model = Sequential(n_users = int(workers) , steps = 5)
+    model = CustSequential(n_users = int(workers) , num_steps = 2)
 
     model.add(Dense(input_dim = 784 , units = 256 , activation = 'sigmoid'))
 
@@ -301,8 +301,5 @@ def start(workers):
 
     return flask.Response(status = 200)
 
-#if __name__ == '__main__':
-
-    #app.run(host='0.0.0.0', port=5000)
-imports()
-(X_train,y_train),(X_test,y_test) = preprocess()
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)

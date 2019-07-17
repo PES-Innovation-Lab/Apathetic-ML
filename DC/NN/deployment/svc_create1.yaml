@@ -18,7 +18,7 @@ spec:
     targetPort: 873
   selector:
     target: worker0
-  type: LoadBalancer
+  #type: LoadBalancer
 
 
 ---

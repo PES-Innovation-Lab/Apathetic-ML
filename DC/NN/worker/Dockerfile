@@ -1,4 +1,4 @@
-FROM altariax0x01/nn_master
+FROM 192.168.0.10:8080/gs_worker
 
 WORKDIR /app
 RUN cd /app && rm -r *

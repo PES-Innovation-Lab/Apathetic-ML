@@ -4,7 +4,7 @@ import numpy as np
 import json
 from sklearn.metrics import accuracy_score as acc_score
 from keras import *
-
+from flask_cors import CORS
 def imports():
     global keras, K,tf,Dense,Graph,Session,load_model,model_from_json
     from keras import backend as K

@@ -20,6 +20,7 @@ iplist=[]
 s = 'http://worker'
 sesh=requests.Session()
 os.system('touch out')
+os.system("echo '' > out")
 
 @app.route('/')
 def hello():
@@ -45,23 +46,16 @@ def start(workers):
         return flask.Response(status=409)   #code:conflict
     else:                   #process never run    
         lrm=subprocess.Popen(args)     #start lr(master) api
-        time.sleep(15)
+        time.sleep(3)
         for ip in iplist:
             url = ip+'/api/worker/begin'
             initw = threading.Thread(target=sesh.get, args=(url,))
             initw.start()                   #start lr(worker) api
-            time.sleep(30)
-        time.sleep(10)
-<<<<<<< Updated upstream
-        url='http://localhost:5000/api/master/nn/start/'+str(len(iplist))
-        #initmodel = threading.Thread(target=sesh.get, args=(url,))
-        #initmodel.start()               #begin training
-        requests.get(url)
-=======
-        url='http://localhost:5000/api/master/nn/start/' + str(workers)
+            time.sleep(5)
+        time.sleep(3)
+        url='http://master:5000/api/master/nn/start/' + str(workers)
         initmodel = threading.Thread(target=sesh.get, args=(url,))
         initmodel.start()               #begin training
->>>>>>> Stashed changes
         return flask.Response(status=202)   #code:accepted
 
 @app.route('/api/master/stop', methods = ['GET'])
@@ -76,6 +70,9 @@ def stop():
             stopw.start()
         lrm.terminate()
         lrm=None
+        with open("out",'a') as stout:
+            print("STOPPED",file=stout)
+
         return flask.Response(status=200)   #code:ok
     else:                   #process never run
         return flask.Response(status=403)   #code:forbidden
