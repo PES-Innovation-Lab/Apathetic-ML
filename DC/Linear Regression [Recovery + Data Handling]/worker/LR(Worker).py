@@ -83,7 +83,7 @@ if __name__ == '__main__':
     #CS
     #app.run(host='127.0.0.1', port=5000)
     user=None
-    consumer = KafkaConsumer('m2w',bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    consumer = KafkaConsumer('m2w1',bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     for msg in consumer:
         x=ast.literal_eval(msg.value)
         if x['fun']=='userinit':
