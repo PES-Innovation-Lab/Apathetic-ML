@@ -63,9 +63,16 @@ class User:
 @app.route('/api/worker/gs/userinit', methods = ['POST'])
 def userinit():
 
-    global user
+    global user,mnist,X_train,X_train_flat,y_test,y_train,y_train_oh,X_test,X_test_flat,keras
     imports()
     user=User()
+    (X_train,y_train),(X_test,y_test) = mnist.load_data()
+
+    X_train_flat = X_train.reshape((X_train.shape[0],-1))
+
+    X_test_flat  = X_test.reshape((X_test.shape[0],-1))
+
+    y_train_oh = keras.utils.to_categorical(y_train,10)
     return flask.Response(status = 200)
     
 @app.route('/api/worker/gs/userfit', methods = ['POST'])
@@ -80,13 +87,7 @@ def accuracyscore():
     # X_train=np.array(flask.request.json['X_train'])
 
     # y_train=np.array(flask.request.json['y_train'])
-    (X_train,y_train),(X_test,y_test) = mnist.load_data()
-
-    X_train_flat = X_train.reshape((X_train.shape[0],-1))
-
-    X_test_flat  = X_test.reshape((X_test.shape[0],-1))
-
-    y_train_oh = keras.utils.to_categorical(y_train,10)
+    
     
     model=flask.request.json['model']
     

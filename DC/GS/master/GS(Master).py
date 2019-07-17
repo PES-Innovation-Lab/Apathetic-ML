@@ -101,6 +101,7 @@ class GridSearch:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for _ in range(self.n_users):
                 futures.append(executor.submit(User,iplist[_]))
+                time.sleep(5)
         for i in futures:
             self.users.append(i.result())
         
@@ -114,8 +115,8 @@ class GridSearch:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 for j in range(self.n_users):
                     
-                    futures.append(executor.submit(self.users[j].fit, self.X_train , self.y_train , self.X_test , self.y_test , i + j*model_per_user , self.feed_list_model[i + j*model_per_user] , batch_size , n_epochs))
-                    
+                    futures.append(executor.submit(self.users[j].fit , i + j*model_per_user , self.feed_list_model[i + j*model_per_user] , batch_size , n_epochs))
+                    time.sleep(5)
             for i in futures:
                 acc.append(i.result())        
                 
@@ -136,14 +137,15 @@ class User:
 
         sesh.post(url)
     
-    def fit(self , X_train , y_train , X_test , y_test , model , feed , batch_size , n_epochs ):
-    
+    #def fit(self , X_train , y_train , X_test , y_test , model , feed , batch_size , n_epochs ):
+    def fit(self , model , feed , batch_size , n_epochs ):
         sesh=get_session()     
 
         url = self.ip+'/api/worker/gs/userfit' 
 
         #r=sesh.post(url,json={'X_test':X_test.tolist(), 'y_test':y_test.tolist(), 'X_train':X_train.tolist() , 'y_train':y_train.tolist() , 'model':model , 'feed':feed , 'batch_size':batch_size , 'n_epochs':n_epochs})
         r=sesh.post(url,json={'model':model , 'feed':feed , 'batch_size':batch_size , 'n_epochs':n_epochs})
+        
         return (r.json()['acc'],r.json()['feed'])
         
 
