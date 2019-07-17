@@ -60,8 +60,8 @@ class LinearRegressor:
         self.train_dataset = train_dataset
         self.train_y = train_y
         self.batch_size = batch_size
-        self.train_dataset_user_batches = numpy.split(self.train_dataset,self.n_users)
-        self.train_y_user_batches = numpy.split(self.train_y,self.n_users)
+        #self.train_dataset_user_batches = numpy.split(self.train_dataset,self.n_users)
+        #self.train_y_user_batches = numpy.split(self.train_y,self.n_users)
         #CS
         self.users = [User(learning_rate = self.learning_rate,topic=topics[user]) for user in range(self.n_users)]
         producer.flush()
@@ -125,7 +125,7 @@ class User:
         #url = self.ip+'/api/worker/lr/userinit'
         #sesh.post(url,json={'learning_rate':learning_rate})
         producer.send(self.topic,{'fun':'userinit','learning_rate':learning_rate})
-    def init_model(self,train_dataset,train_y,batch_size):
+    def init_model(self,batch_size):
         global producer
         producer.send(self.topic,{'fun':'initmodel','batch_size':batch_size})
         #sesh=get_session()     
