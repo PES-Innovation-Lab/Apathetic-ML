@@ -10,6 +10,7 @@ from flask_cors import CORS
 #user=None
 
 #sesh=requests.Session()
+producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
 #CE
 
 class User:
@@ -82,6 +83,7 @@ def fitmodel():
 if __name__ == '__main__':
     #CS
     #app.run(host='127.0.0.1', port=5000)
+    global producer
     user=None
     consumer = KafkaConsumer('m2w1',bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     for msg in consumer:
@@ -113,7 +115,6 @@ if __name__ == '__main__':
                     print(str(e),file=standardout)
         elif x['fun']=='fitmodel':
             (wgrad,bgrad)=user.fit_model(numpy.array(x['weights']),x['biases'],x['step'])
-            producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
             producer.send('w2m',{'wgrad':wgrad.tolist(),'bgrad':bgrad})
     #CE
     
