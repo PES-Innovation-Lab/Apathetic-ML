@@ -33,10 +33,10 @@ def reset():
     state = 0
     os.system("echo '' > out")
     for item in iplist:
-        url = item+'/api/worker/reset'
+        url = item+'/api/worker/stop'
         r = requests.get(url)
         with open("out",'w') as std:
-            print("Resetting worker ",item,file=std)
+            print("Stopping worker ",item,file=std)
     distribution_dict = dict()
     file_list = dict()
     iplist = []
@@ -53,15 +53,6 @@ def hello():
     (out, err) = proc.communicate()
     for item in out.decode('ascii').split('\n'):
         a += "<p>"+str(item)+"</p>"
-    a+="</div><div class=\"split right\">"
-    #proc = subprocess.Popen(["cat", "standarda"], stdout=subprocess.PIPE)
-    #(out, err) = proc.communicate()
-    #for item in out.decode('ascii').split('\n'):
-        #a += "<p>"+str(item)+"</p>"
-    #proc = subprocess.Popen(["cat", "standardb"], stdout=subprocess.PIPE)
-    #(out, err) = proc.communicate()
-    #for item in out.decode('ascii').split('\n'):
-        #a += "<p>"+str(item)+"</p>"
     return a+"</div></html>"
 
 

@@ -1,14 +1,19 @@
 import flask
+import logging
 import requests
 import numpy as np
 from copy import deepcopy
 import threading
 import concurrent.futures
 from flask_cors import CORS
+import time
 app = flask.Flask(__name__)
 CORS(app)
 user=None
-
+if __name__ != '__main__':
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
 iplist=[]
 s = "http://subworker"
 thread_local = threading.local()
@@ -83,9 +88,10 @@ def classify(dataset,means,ip):
 
 @app.route('/api/worker/km/userinit/<string:subworkers>', methods = ['POST'])
 def userinit(subworkers):
+    #subworkers = list of ids sep +
     global user
     global iplist,s
-    iplist = [s+str(i)+':5000' for i in range(0,int(subworkers))]
+    iplist = [s+str(i)+':5000' for i in subworkers.split("+")]
     dataset=np.array(flask.request.json['dataset'])
     user=User(dataset)
     return flask.Response(status = 200)
