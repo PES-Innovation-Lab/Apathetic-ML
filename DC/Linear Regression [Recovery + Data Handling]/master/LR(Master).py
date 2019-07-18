@@ -174,7 +174,7 @@ def start(workers):
     with open("out",'a') as standardout:
         print("Starting processing\n",file=standardout)
     #iplist = [s+str(i)+':5000' for i in range(0,int(workers))]
-    topics=['m2w'+str(i) for i in range(0,int(workers))]
+    topics=['m2w'+str(i+1) for i in range(int(workers))]
     #CE
     regressor = LinearRegressor(learning_rate=0.001,n_users=int(workers))
     #initw = threading.Thread(target=regressor.fit, args=(X_train,y_train,X_test,y_test,100))
