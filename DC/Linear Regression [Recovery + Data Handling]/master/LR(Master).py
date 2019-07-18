@@ -169,11 +169,12 @@ def start(workers):
     global regressor
     global X_test
     global y_test
-    global iplist
+    #CS
+    #global iplist
     with open("out",'a') as standardout:
         print("Starting processing\n",file=standardout)
-    iplist = [s+str(i)+':5000' for i in range(0,int(workers))]
-    
+    #iplist = [s+str(i)+':5000' for i in range(0,int(workers))]
+    #CE
     regressor = LinearRegressor(learning_rate=0.001,n_users=int(workers))
     #initw = threading.Thread(target=regressor.fit, args=(X_train,y_train,X_test,y_test,100))
     #initw.start()
