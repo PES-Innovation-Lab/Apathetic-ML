@@ -1,6 +1,10 @@
 import flask
 import numpy as np
 import json
+from kafka import KafkaConsumer,KafkaProducer
+from json import dumps
+import ast
+
 #CS
 #app = flask.Flask(__name__)
 producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])

@@ -9,6 +9,10 @@ import threading
 import concurrent.futures
 import time
 from flask_cors import CORS
+from kafka import KafkaConsumer,KafkaProducer
+from json import dumps
+import ast
+
 app = flask.Flask(__name__)
 CORS(app)
 # import dataset and assign number of clusters

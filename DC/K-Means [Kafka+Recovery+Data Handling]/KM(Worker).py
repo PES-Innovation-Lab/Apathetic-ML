@@ -5,6 +5,10 @@ import numpy as np
 import pandas as pd
 from copy import deepcopy
 from flask_cors import CORS
+from kafka import KafkaConsumer,KafkaProducer
+from json import dumps
+import ast
+
 #CS
 '''
 app = flask.Flask(__name__)
