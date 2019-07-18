@@ -74,6 +74,7 @@ class User:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 for user_i in range(len(topics)):
                     executor.submit(classify,dataset_batches[user_i],deepcopy(means),topics[user_i])
+            producer.flush()
         a=future.result()
         '''
         a=futures[0].result()
