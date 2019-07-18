@@ -11,6 +11,7 @@ from flask_cors import CORS
 
 #sesh=requests.Session()
 producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
+rtopic='m2w1'   #topic that worker consumes from
 #CE
 
 class User:
@@ -84,8 +85,9 @@ if __name__ == '__main__':
     #CS
     #app.run(host='127.0.0.1', port=5000)
     global producer
+    global rtopic
     user=None
-    consumer = KafkaConsumer('m2w1',bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    consumer = KafkaConsumer(rtopic,bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     for msg in consumer:
         x=ast.literal_eval(msg.value)
         if x['fun']=='userinit':
