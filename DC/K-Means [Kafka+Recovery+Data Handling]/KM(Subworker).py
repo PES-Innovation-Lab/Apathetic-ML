@@ -4,6 +4,7 @@ import json
 #CS
 #app = flask.Flask(__name__)
 producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
+rtopic='w2sw1'
 '''
 @app.route('/api/subworker/km/classify', methods = ['POST'])
 def classify():
@@ -28,7 +29,8 @@ if __name__ == '__main__':
     #CS
     #app.run(host='127.0.0.1', port=9000)
     global producer
-    consumer = KafkaConsumer('w2sw1',bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    global rtopic
+    consumer = KafkaConsumer(rtopic,bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     for msg in consumer:
         x=ast.literal_eval(msg.value)
         dataset=np.array(x['dataset'])
@@ -47,4 +49,4 @@ if __name__ == '__main__':
                 cluster[i][j]=cluster[i][j].tolist()
         producer.send('sw2w',{'cluster':cluster})
     #CE
-        
+
