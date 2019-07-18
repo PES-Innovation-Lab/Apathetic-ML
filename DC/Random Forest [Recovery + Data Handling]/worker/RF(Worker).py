@@ -9,7 +9,7 @@ import time
 import gc
 from multiprocessing import Process, Queue
 from kafka import KafkaConsumer,KafkaProducer
-from json import dumps
+from json import dumps,loads
 import ast
 
 from flask_cors import CORS
