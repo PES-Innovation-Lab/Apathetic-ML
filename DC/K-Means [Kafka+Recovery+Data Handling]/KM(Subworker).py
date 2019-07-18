@@ -2,7 +2,7 @@ import flask
 import numpy as np
 import json
 from kafka import KafkaConsumer,KafkaProducer
-from json import dumps
+from json import dumps,loads
 import ast
 
 #CS

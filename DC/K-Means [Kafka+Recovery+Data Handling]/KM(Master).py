@@ -10,7 +10,7 @@ import concurrent.futures
 import time
 from flask_cors import CORS
 from kafka import KafkaConsumer,KafkaProducer
-from json import dumps
+from json import dumps,loads
 import ast
 
 app = flask.Flask(__name__)

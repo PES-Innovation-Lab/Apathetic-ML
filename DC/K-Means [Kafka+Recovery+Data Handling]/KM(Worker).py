@@ -6,7 +6,7 @@ import pandas as pd
 from copy import deepcopy
 from flask_cors import CORS
 from kafka import KafkaConsumer,KafkaProducer
-from json import dumps
+from json import dumps,loads
 import ast
 
 #CS
