@@ -21,11 +21,11 @@ with open("out",'a') as standardout:
     print(type(dataset),type(dataset[0]),file=standardout)
 cluster=None
 
-s = 'http://worker'
 #CS
+#s = 'http://worker'
 producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
-topics=['m2w1','m2w2']
-
+#topics=['m2w1','m2w2']
+topics=[]
 '''
 iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000"]
 
@@ -44,8 +44,9 @@ dataset = sc_X.fit_transform(dataset)
 
 
 class KCluster:
-    def __init__(self,n_users=10):
+    def __init__(self,n_users=10,n_sw=2):
         self.n_users = n_users
+        self.n_sw=n_sw
     def fit_cluster(self,dataset,k=5,n_iters = 60):
         #CS        
         global topics
@@ -59,7 +60,7 @@ class KCluster:
             print("[FITTING]",file=standardout)
         self.n_iters = min(n_iters,f(len(dataset))/(f(k)*f(len(dataset)-k)))
         #CS
-        self.users = [User(topic=topics[user]) for user in range(self.n_users)]
+        self.users = [User(topic=topics[user],n_sw=self.n_sw) for user in range(self.n_users)]
         producer.flush()
         #CE
         self.combs = np.asarray(list(itertools.combinations(self.dataset,self.k))[:n_iters])
@@ -82,7 +83,7 @@ class KCluster:
         #CE
     def recieve_combs(self,cluster):
         self.final_clusters.append(cluster)
-        if len(self.final_clusters)==len(iplist): 
+        if len(self.final_clusters)==len(topics): 
             err = self.final_clusters[0][1]
             self.cluster = self.final_clusters[0][0]
             for i in self.final_clusters:
@@ -102,10 +103,10 @@ class KCluster:
     
 #CS
 class User:
-    def __init__(self,topic):
+    def __init__(self,topic,n_sw):
         global producer
         self.topic=topic
-        producer.send(self.topic,{'fun':'userinit'})
+        producer.send(self.topic,{'fun':'userinit','n_sw':n_sw})
         '''
         sesh=get_session()
         self.ip=ip
@@ -159,15 +160,19 @@ def consumer(nw):
 @app.route('/api/master/km/start/<string:workers>', methods = ['GET'])
 def start(workers):
     global cluster
-    global number_of_workers
-    global s
-    global iplist
+    #CS
+    #global number_of_workers
+    global topics
+    #global s
+    #global iplist
     abc = workers.split("+")
     number_of_workers = int(abc[0])
-    iplist= [s+str(i)+':5000' for i in range(0,number_of_workers)]
+    topics=['m2w'+str(i+1) for i in range(len(number_of_workers))]
+    #iplist= [s+str(i)+':5000' for i in range(0,number_of_workers)]
+    #CE
     a=time.time()
-    cluster = KCluster(n_users=number_of_workers)
-    cluster.fit_cluster(dataset = dataset,k = 3,n_iters=int(abc[1]))
+    cluster = KCluster(n_users=number_of_workers,n_sw=int(abc[1]))
+    cluster.fit_cluster(dataset = dataset,k = 3,n_iters=int(abc[2]))
     b=time.time()
     with open("out",'a') as standardout:
             print("EXEC TIME:",b-a,'s',file=standardout)

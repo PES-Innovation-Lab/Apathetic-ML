@@ -20,7 +20,9 @@ def get_session():
         thread_local.session = requests.Session()
     return thread_local.session
 '''
-topics=['w2sw1','w2sw2']
+#topics=['w2sw1','w2sw2']
+topics=[]
+mrtopic='m2w1'
 producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
 #CE
 
@@ -164,8 +166,10 @@ def fitmodel():
 if __name__ == '__main__':
     #app.run(host='0.0.0.0', port=5000)
     global producer
+    global mrtopic
+    global topics
     user=None
-    consumer = KafkaConsumer('m2w1',bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    consumer = KafkaConsumer(mrtopic,bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     for msg in consumer:
         x=ast.literal_eval(msg.value)
         if x['fun']=='userinit':
@@ -176,6 +180,8 @@ if __name__ == '__main__':
             sc_X = StandardScaler()
             dataset = sc_X.fit_transform(dataset)
             dataset = np.array(dataset.tolist())
+            n_sw=x['n_sw']
+            topics=['w2sw'+str(i+1) for i in range(n_sw)]
             user=User(dataset)
         elif x['fun']=='initmodel':
             combs=np.array(x['combs'])

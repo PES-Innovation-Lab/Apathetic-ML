@@ -28,13 +28,12 @@ X_train = sc_X.fit_transform(X_train)
 X_test = sc_X.transform(X_test)
 
 regressor=None
-
-s = 'http://worker'
-wb = []
 #CS
+#s = 'http://worker'
+wb = []
 producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
-topics=['m2w1','m2w2']
-
+#topics=['m2w1','m2w2']
+topics=[]
 #iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000","http://127.0.0.1:9100","http://127.0.0.1:11100","http://127.0.0.1:13000"]
 #thread_local = threading.local()
 '''
@@ -169,11 +168,14 @@ def start(workers):
     global regressor
     global X_test
     global y_test
-    global iplist
+    #CS
+    #global iplist
+    global topics
     with open("out",'a') as standardout:
         print("Starting processing\n",file=standardout)
-    iplist = [s+str(i)+':5000' for i in range(0,int(workers))]
-    
+    #iplist = [s+str(i)+':5000' for i in range(0,int(workers))]
+    topics=['m2w'+str(i+1) for i in range(int(workers))]
+    #CE
     regressor = LinearRegressor(learning_rate=0.001,n_users=int(workers))
     #initw = threading.Thread(target=regressor.fit, args=(X_train,y_train,X_test,y_test,100))
     #initw.start()
