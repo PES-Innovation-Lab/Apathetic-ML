@@ -49,10 +49,11 @@ def start(workers):
         time.sleep(1)
         for ip in range(len(iplist)):
             url = iplist[ip]+'/api/worker/start/'+subworkerlist[ip]
-            initw = threading.Thread(target=sesh.get, args=(url,))
-            initw.start()                   #start lr(worker) api
+            #initw = threading.Thread(target=sesh.get, args=(url,))
+            #initw.start()                   #start lr(worker) api
+            requests.get(url)
             time.sleep(1)
-        url='http://master:5000/api/master/km/start/' + str(workers)
+        url='http://localhost:5000/api/master/km/start/' + str(workers)
         initmodel = threading.Thread(target=sesh.get, args=(url,))
         initmodel.start()               #begin training
         return flask.Response(status=202)   #code:accepted

@@ -64,16 +64,17 @@ class KCluster:
                 print("length of final_clusters",len(self.final_clusters),file=stout)
         if len(self.final_clusters)==2:
             err = self.final_clusters[0][1]
-            cluster = self.final_clusters[0][0]
+            self.cluster = self.final_clusters[0][0]
+            
             for i in self.final_clusters:
                 if i[1]<err:
-                    cluster = i[0]
+                    self.cluster = i[0]
                     err = i[1]
             with open('out','a') as stout:
                 print("Cluster is virtually printed",file=stout)
                 #print(cluster,err,file=stout)
     def ret_cen(self):
-        return np.array([np.mean(x) for x in self.final_clusters])
+        return np.array([np.mean(x) for x in self.cluster])
     def predict(self,X):
         return np.argmin(np.square(self.ret_cen() - X)) + 1
 
@@ -115,6 +116,7 @@ def start(workers):
     cluster.fit_cluster(dataset = dataset,k = 3)
     b=time.time()
     with open('out','a') as stout:
+        print("Centroids",cluster.ret_cen(),file=stout)
         print("TIME TO EXEC:",b-a,file=stout)
         
     return flask.Response(status = 200)

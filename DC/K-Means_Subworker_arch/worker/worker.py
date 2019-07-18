@@ -33,12 +33,11 @@ def start(subworkers):
     else:                   #process never run
         
         lrw=subprocess.Popen(args)
-        time.sleep(1)
         for ip in iplist:
             url = ip+'/api/subworker/start'
-            initw = threading.Thread(target=sesh.get, args=(url,))
-            initw.start()                   #start lr(worker) api
-            time.sleep(1)
+            #initw = threading.Thread(target=sesh.get, args=(url,))
+            #initw.start()                   #start lr(worker) api
+            requests.get(url)
         return flask.Response(status=202)   #code:accepted
 
 @app.route('/api/worker/stop', methods = ['GET'])
