@@ -8,13 +8,22 @@ import pandas as pd
 import time
 import gc
 from multiprocessing import Process, Queue
+from kafka import KafkaConsumer,KafkaProducer
+from json import dumps
+import ast
 
 from flask_cors import CORS
+#CS
+'''
 app = flask.Flask(__name__)
 CORS(app)
 user=None
 
 sesh=requests.Session()
+'''
+producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
+rtopic='m2w1'
+#CE
 
 def file_dumper(q,t_file_name,item):
     d_temp_file = open('/dev/core/files/'+t_file_name, 'wb')
@@ -71,6 +80,8 @@ class User:
         return dts
         
         
+#CS
+'''
 @app.route('/api/worker/rf/userinit', methods = ['POST'])
 def userinit():
     global user
@@ -102,6 +113,40 @@ def workerfit():
     user_i=flask.request.json['user_i']
     dts=user.fit(user_i)
     return flask.Response(json.JSONEncoder().encode({'dts':dts}),mimetype='application/json',status = 200)
-    
+'''
+#CE
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    #CS
+    #app.run(host='127.0.0.1', port=5000)
+    global producer
+    global rtopic
+    user=None
+    consumer = KafkaConsumer(rtopic,bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    for msg in consumer:
+        x=ast.literal_eval(msg.value)
+        if x['fun']=='userinit':
+            try:
+                with open("out",'a') as standardout:
+                    print("Data Reading",file=standardout)
+                n_trees=x['n_trees']
+                #X=np.array(flask.request.json['X'])
+                #y=np.array(flask.request.json['y'])
+                # Importing the dataset
+                dataset = pd.read_csv('Social_Network_Ads.csv')
+                X = dataset.iloc[:, [2, 3]].values
+                y = dataset.iloc[:, 4].values
+                from sklearn.preprocessing import StandardScaler
+                sc = StandardScaler()
+                X_train = sc.fit_transform(X)
+
+                user=User(n_trees,X_train,y)
+                with open("out",'a') as standardout:
+                    print("Data Ready",file=standardout)
+            except Exception as e:
+                with open("out",'a') as standardout:
+                    print(str(e),file=standardout)
+        elif x['fun']=='workerfit':
+            dts=user.fit(rtopic[3])
+            producer.send('w2m',{'dts':dts})
+    #CE
