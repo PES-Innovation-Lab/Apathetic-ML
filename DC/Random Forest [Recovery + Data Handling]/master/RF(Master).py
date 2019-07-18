@@ -11,9 +11,18 @@ import concurrent.futures
 from sklearn.metrics import confusion_matrix
 import time
 from flask_cors import  CORS
+from kafka import KafkaConsumer,KafkaProducer
+from json import dumps
+import ast
+
 app = flask.Flask(__name__)
 CORS(app)
 #iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000"]
+#CS
+producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
+#topics=['m2w1','m2w2']
+topics=[]
+'''
 s = 'http://worker'
 iplist = []
 
@@ -23,7 +32,8 @@ def get_session():
     if not hasattr(thread_local, "session"):
         thread_local.session = requests.Session()
     return thread_local.session
-
+'''
+#CE
 # Importing the dataset
 dataset = pd.read_csv('Social_Network_Ads.csv')
 X = dataset.iloc[:, [2, 3]].values
@@ -44,7 +54,11 @@ class RF:
     def __init__(self,n_users):
         self.n_users = n_users
     def fit(self,n_trees,X,X_test,y,y_test):
-        global iplist
+        #CS        
+        global topics
+        global producer
+        #global iplist
+        #CE
         self.n_trees = n_trees
         self.X = X
         self.y = y
@@ -54,13 +68,18 @@ class RF:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for i in range(self.n_users):
                 #futures.append(executor.submit(User,self.n_trees//self.n_users,X,y,iplist[i]))
-                futures.append(executor.submit(User,self.n_trees//self.n_users,iplist[i]))
+                #CS
+                futures.append(executor.submit(User,self.n_trees//self.n_users,topics[i]))
+        producer.flush()
+        #CE
         with open("out",'a') as standardout:
             print("FIRST FOR",time.time()-a,file=standardout)
             
         for i in futures:
             users.append(i.result())
         #users = [User(self.n_trees//self.n_users,X,y) for i in range(self.n_users)]
+        #CS
+        '''
         dts = []
         futures = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -71,6 +90,16 @@ class RF:
         
         for i in futures:
             dts.extend(i.result())
+        '''
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future=executor.submit(consumer,self.n_users)
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                for user_i in range(self.n_users):
+                    executor.submit(users[i].fit)
+            producer.flush()
+        with open("out",'a') as standardout:
+            print("SECOND FOR",time.time()-a,file=standardout)
+        dts=future.result()
         #for i in range(self.n_users):
         #    dts.extend(users[i].fit(i))
         self.DTs = []
@@ -98,27 +127,35 @@ class RF:
             res.append(max(res_dict.items(), key=operator.itemgetter(1))[0])
         return res
 
-
+#CS
 class User:
     #def __init__(self,n_trees,X,y,ip):
-    def __init__(self,n_trees,ip):
+    def __init__(self,n_trees,topic):
+        global producer
+        self.topic=topic
+        producer.send(self.topic,{'fun':'userinit','n_trees':n_trees})
         '''
         self.n_trees = n_trees
         self.X = X
         self.y = y
-        '''
+        
         sesh=get_session()
         self.ip=ip    
         url = self.ip+'/api/worker/rf/userinit'       #send train dataset and labels to worker nodes
         #sesh.post(url,json={'n_trees':n_trees,'X':X.tolist(),'y':y.tolist()})
         sesh.post(url,json={'n_trees':n_trees})
-
-    def fit(self,user_i):
+        '''
+        
+    def fit(self):
+        global producer
+        self.topic=topic
+        producer.send(self.topic,{'fun':'workerfit'})
+        '''
         sesh=get_session()
         url = self.ip+'/api/worker/rf/workerfit'       #send train dataset and labels to worker nodes
         r=sesh.post(url,json={'user_i':user_i})
         return r.json()['dts']
-        '''
+        
         datasets =[]
         DTs = []
         s = str(user_i)+'_'
@@ -136,6 +173,21 @@ class User:
             dts.append(t_file_name)
         return dts
         '''
+        
+def consumer(nw):
+    consumer = KafkaConsumer('w2m',bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    cnt=0
+    dts=[]
+    for msg in consumer:
+        x=ast.literal_eval(msg.value)
+        if cnt!=nw:
+            dts.extend(x['dts'])
+            cnt+=1
+        else:
+            break
+    consumer.close()
+    return dts
+#CE
 
 @app.route('/api/master/rf/start/<string:workers>', methods = ['GET'])
 def start(workers):
@@ -143,10 +195,15 @@ def start(workers):
     global X_train
     global y_test
     global y_train
-    global iplist
+    #CS
+    #global iplist
+    global topics
 
-    iplist = [s+str(i)+':5000' for i in range(0,int(workers))] 
+    #iplist = [s+str(i)+':5000' for i in range(0,int(workers))] 
+    topics=['m2w'+str(i) for i in range(int(workers))]
+    #CE
     rf = RF(int(workers))
+    
     
     #rf.fit(100,X_train,y_train)
     initw = threading.Thread(target=rf.fit, args=(240,X_train,X_test,y_train,y_test))
@@ -155,5 +212,3 @@ def start(workers):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
-
-
