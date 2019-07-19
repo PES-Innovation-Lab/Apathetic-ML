@@ -9,10 +9,8 @@ import socket
 app = flask.Flask(__name__)
 CORS(app)
 
-#path_to_run = './'          #directory here
-path_to_run=''
 py_name = 'LR(Master).py'   #fileName here
-args = ["python3", "{}{}".format(path_to_run, py_name), ">","standardb"]
+args = ["python3", py_name]
 #args = ["gunicorn", "-b","0.0.0.0:5000", "LR(Master):app","--timeout","120"]
 lrm=None
 
@@ -49,9 +47,9 @@ def start(workers):
     iplist = [s + str(i)+':4000' for i in range(0,int(workers))]
     if lrm is not None:    #if process is running
         return flask.Response(status=409)   #code:conflict
-    else:                   #process never run 
+    else:                   #process never run
         lrm=subprocess.Popen(args,stdout=subprocess.PIPE)     #start lr(master) api
-       
+
         time.sleep(2)
         for ip in iplist:
             url = ip+'/api/worker/begin'
@@ -59,7 +57,7 @@ def start(workers):
             initw.start()                   #start lr(worker) api
             time.sleep(2)
         url='http://localhost:5000/api/master/lr/start' + '/'+str(workers)
-        
+
         #initmodel = threading.Thread(target=sesh.get, args=(url,))
         #initmodel.start()               #begin training
         sesh.get(url)
@@ -78,15 +76,12 @@ def stop():
             stopw = threading.Thread(target=sesh.get, args=(url,))
             stopw.start()
         r = requests.get("http://localhost:5000/api/gimmeresults")
-        #with open('a','w') as myfile:
-        #        #print(r.content,file=myfile)
         lrm.terminate()
         lrm=None
         return flask.Response(status=200)   #code:ok
-    else:                   #process never run
+    else:                   #process never ran
         return flask.Response(status=403)   #code:forbidden
 
 
 if __name__ == '__main__':
-    #app.run(host='127.0.0.1', port=2000)
     app.run(host='0.0.0.0', port = 4000)

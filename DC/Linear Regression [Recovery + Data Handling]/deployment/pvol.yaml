@@ -11,8 +11,10 @@ spec:
   accessModes:
     - ReadWriteMany
   nfs:
-    server: nfs-server-core.default.svc.cluster.local
-    path: "/"
+    server: 192.168.0.12
+    path: "/mnt/core"          ##LOCAL
+    #server:                     ##CLOUD
+    #path: "/"
     readOnly: false
     
 ---
@@ -29,8 +31,10 @@ spec:
   accessModes:
     - ReadWriteMany
   nfs:
-    server: nfs-server-shadow.default.svc.cluster.local
-    path: "/"
+    server: 192.168.0.12
+    path: "/mnt/shadow"        ##LOCAL
+    #server:                     ##CLOUD
+    #path:"/"
     readOnly: false
 
 ---

@@ -51,15 +51,15 @@ def hello():
     (out, err) = proc.communicate()
     for item in out.decode('ascii').split('\n'):
         a += "<p>"+str(item)+"</p>"
-    a+="</div><div class=\"split right\">"
-    proc = subprocess.Popen(["cat", "standarda"], stdout=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    for item in out.decode('ascii').split('\n'):
-        a += "<p>"+str(item)+"</p>"
-    proc = subprocess.Popen(["cat", "standardb"], stdout=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    for item in out.decode('ascii').split('\n'):
-        a += "<p>"+str(item)+"</p>"
+    #a+="</div><div class=\"split right\">"
+    #proc = subprocess.Popen(["cat", "standarda"], stdout=subprocess.PIPE)
+    #(out, err) = proc.communicate()
+    #for item in out.decode('ascii').split('\n'):
+        #a += "<p>"+str(item)+"</p>"
+    #proc = subprocess.Popen(["cat", "standardb"], stdout=subprocess.PIPE)
+    #(out, err) = proc.communicate()
+    #for item in out.decode('ascii').split('\n'):
+        #a += "<p>"+str(item)+"</p>"
     return a+"</div></html>"
 
 @app.route('/api/startdeploy', methods = ['POST'])
@@ -137,5 +137,5 @@ def get_path():
     global path
     return path
 if __name__ == '__main__':
-    #app.run(host='127.0.0.1', port=2000)
+    
     app.run(host='0.0.0.0', port = 4000)
