@@ -1,43 +1,27 @@
 
-import flask
-import requests
 import numpy as np
 import pandas as pd
 from copy import deepcopy
-from flask_cors import CORS
-from kafka import KafkaConsumer,KafkaProducer
+from kafka import KafkaConsumer,KafkaProducer,TopicPartition
 from json import dumps,loads
-import ast
+import socket
 
-#CS
-'''
-app = flask.Flask(__name__)
-
-user=None
-
-iplist=["http://127.0.0.1:9000","http://127.0.0.1:11000"]
-
-thread_local = threading.local()
-
-def get_session():
-    if not hasattr(thread_local, "session"):
-        thread_local.session = requests.Session()
-    return thread_local.session
-'''
-#topics=['w2sw1','w2sw2']
 topics=[]
-mrtopic='m2w1'
+this_host = socket.gethostname()
+myid = this_host[:this_host.find("-")]
+myid = myid[-1]
 producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
-#CE
+producers=[KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092']) for i in range(workers)]
+KConsumer = KafkaConsumer('sw2w',bootstrap_servers=['kafka-service:9092'],group_id="master",auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+mrtopic='m2w'+myid
+with open("out",'a') as standardout:
+    print("KM w Launched",mrtopic,file=standardout)
 
 
 class User:
     def __init__(self,dataset):
         self.dataset=dataset
-        
-        #recieve dataset from the actual master function
     def init_model(self,combs):
-        #receive dataset from the master function
         self.combs = combs
     def find_best_cluster(self):
         final_clusters = []
@@ -49,7 +33,6 @@ class User:
             if i[1]<err:
                 cluster = i[0]
                 err = i[1]
-        #send cluster to the master node and append to the self.final_clusters
         return cluster,err
     def find_cluster(self,ini_means):
         old_means = ini_means
@@ -72,111 +55,53 @@ class User:
     def classify_cluster(self,means):
         #CS
         global topics
+        global producers
+        global KConsumer
         dataset_batches=np.split(self.dataset,len(topics))
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future=executor.submit(consumersw,len(topics),means)
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                for user_i in range(len(topics)):
-                    executor.submit(classify,dataset_batches[user_i],deepcopy(means),topics[user_i])
-            producer.flush()
-        a=future.result()
-        '''
-        a=futures[0].result()
-        for i in range(len(means)):
-            for j in range(1,len(futures)):
-                a[i].extend(futures[j].result()[i])
-        return np.array(a)
-        '''
+            for user_i in range(len(topics)):
+                #executor.submit(classify,dataset_batches[user_i],deepcopy(means),topics[user_i])
+                executor.submit(classify,dataset_batches[user_i],deepcopy(means),topics[user_i],producers[user_i])
+        #producer.flush()
+        for i in range(len(topics)):
+            producers[i].flush()
+        if (KConsumer.partitions_for_topic('sw2w')):
+            ps = [TopicPartition('sw2w', p) for p in KConsumer.partitions_for_topic('sw2w')]
+            KConsumer.resume(*ps)
+        a=consumersw(len(topics),means)
+        ps = [TopicPartition('sw2w', p) for p in KConsumer.partitions_for_topic('sw2w')]
+        KConsumer.pause(*ps)
         return a
         
-def classify(dataset,means,topic):
-    global producer
+def classify(dataset,means,topic,producer):  #def classify(dataset,means,topic):
+    #global producer
     producer.send(topic,{'fun':'classify','dataset':dataset.tolist(),'means':np.array(means).tolist()})
-    '''
-    sesh=get_session()
-    url = ip+'/api/subworker/km/classify'
-    dataset=dataset.tolist()
-    #for i in range(len(dataset)):
-        #print(type(dataset[i]))
-    #means=means.tolist()
-    #for i in range(len(means)):
-        #means[i]=means[i].tolist()
-    r=sesh.post(url,json={'dataset':dataset,'means':means})
-    return r.json()['cluster']
-    '''
     
 def consumersw(nw,means):
-    consumer = KafkaConsumer('sw2w',bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    global KConsumer
     cnt=0
     futures=[]
-    for msg in consumer:
-        x=ast.literal_eval(msg.value)
-        if cnt!=nw:
-            futures.append(x['cluster'])
-            cnt+=1
-        else:
+    for msg in KConsumer:
+        x=msg.value
+        futures.append(x['cluster'])
+        cnt+=1
+        if cnt==nw:
             break
-    consumer.close()
-    a=futures[0].result()
+    a=futures[0]
     for i in range(len(means)):
         for j in range(1,len(futures)):
             a[i].extend(futures[j].result()[i])
     return np.array(a)
-#CE
-    
 
-#CS
-'''
-@app.route('/api/worker/km/userinit', methods = ['POST'])
-def userinit():
-    global user
-    #dataset=np.array(flask.request.json['dataset'])
-    dataset = pd.read_csv('cars.csv')
-    dataset = dataset.iloc[:,0:7].values
-    dataset = np.array([np.array([int(j)for j in i])  for i in dataset if '' or ' ' not in i])
-    from sklearn.preprocessing import StandardScaler
-    sc_X = StandardScaler()
-    dataset = sc_X.fit_transform(dataset)
-    dataset = np.array(dataset.tolist())
-    user=User(dataset)
-    return flask.Response(status = 200)
-    
-@app.route('/api/worker/km/initmodel', methods = ['POST'])
-def initmodel():
-    global user
-    combs=np.array(flask.request.json['combs'])
-    user.init_model(combs)
-    return flask.Response(status = 200)
-    
-@app.route('/api/worker/km/findbestcluster', methods=['POST'])
-def fitmodel():
-    global user
-    global sesh
-    ret_clusters,err=user.find_best_cluster()
-    cluster = []
-    for i in ret_clusters:
-        temp1 = []
-        for j in i:
-            temp11 = []
-            for k in j:
-                temp11.append(k)
-            temp1.append(temp11)
-        cluster.append(temp1)
-                
-    url = 'http://master:5000/api/master/km/receivecombs'
-    sesh.post(url,json={'clusters':cluster,'err':err})
-    return flask.Response(status = 200)
-'''    
     
 if __name__ == '__main__':
-    #app.run(host='0.0.0.0', port=5000)
     global producer
     global mrtopic
     global topics
     user=None
     consumer = KafkaConsumer(mrtopic,bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     for msg in consumer:
-        x=ast.literal_eval(msg.value)
+        x=msg.value
         if x['fun']=='userinit':
             dataset = pd.read_csv('cars.csv')
             dataset = dataset.iloc[:,0:7].values
@@ -186,7 +111,7 @@ if __name__ == '__main__':
             dataset = sc_X.fit_transform(dataset)
             dataset = np.array(dataset.tolist())
             n_sw=x['n_sw']
-            topics=['w2sw'+str(i+1) for i in range(n_sw)]
+            topics=['w2sw'+str(i) for i in range(n_sw)]
             user=User(dataset)
         elif x['fun']=='initmodel':
             combs=np.array(x['combs'])
@@ -203,4 +128,4 @@ if __name__ == '__main__':
                     temp1.append(temp11)
                 cluster.append(temp1)
             producer.send('w2m',{'clusters':cluster,'err':err})
-#CE    
+
