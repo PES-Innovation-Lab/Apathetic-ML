@@ -11,8 +11,8 @@ this_host = socket.gethostname()
 myid = this_host[:this_host.find("-")]
 myid = myid[-1]
 producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
-producers=[KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092']) for i in range(workers)]
-KConsumer = KafkaConsumer('sw2w',bootstrap_servers=['kafka-service:9092'],group_id="master",auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+producers=[]
+KConsumer = KafkaConsumer('sw2w',bootstrap_servers=['kafka-service:9092'],group_id="worker",auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
 mrtopic='m2w'+myid
 with open("out",'a') as standardout:
     print("KM w Launched",mrtopic,file=standardout)
@@ -112,6 +112,7 @@ if __name__ == '__main__':
             dataset = np.array(dataset.tolist())
             n_sw=x['n_sw']
             topics=['w2sw'+str(i) for i in range(n_sw)]
+            producers=[KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092']) for i in range(n_sw)]
             user=User(dataset)
         elif x['fun']=='initmodel':
             combs=np.array(x['combs'])
@@ -128,4 +129,3 @@ if __name__ == '__main__':
                     temp1.append(temp11)
                 cluster.append(temp1)
             producer.send('w2m',{'clusters':cluster,'err':err})
-
