@@ -1,17 +1,18 @@
 import flask
 from flask_cors import CORS
-
+import concurrent.futures
+import threading
 app = flask.Flask(__name__)
 CORS(app)
 
 cluster=dataset=producers=KConsumer=topics=None
 
 def imports():
+    global np,pd,itertools,math, time, KafkaConsumer,KafkaProducer,TopicPartition,dumps,loads,cProfile,sys
     import numpy as np
     import pandas as pd
     import itertools 
     import math
-    import concurrent.futures
     import time
     from kafka import KafkaConsumer,KafkaProducer,TopicPartition
     from json import dumps,loads
@@ -29,7 +30,7 @@ def preprocess(workers):
 
     #producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
     producers=[KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092']) for i in range(workers)]
-    KConsumer = KafkaConsumer('w2m',bootstrap_servers=['kafka-service:9092'],group_id="master",auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    KConsumer = KafkaConsumer('w2m',bootstrap_servers=['kafka-service:9092'],group_id=None,auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     topics=[]
 
     from sklearn.preprocessing import StandardScaler
@@ -62,22 +63,34 @@ class KCluster:
         self.final_clusters = []
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for user_i in range(self.n_users):
-                executor.submit(self.users[user_i].init_model,self.combs_split[user_i])
+                #executor.submit(self.users[user_i].init_model,self.combs_split[user_i])
+                self.users[user_i].init_model(self.combs_split[user_i])
         #producer.flush()
+        for i in range(self.n_users):
+            producers[i].flush()
+        with open("out",'a') as standardout:
+            print("[Sent all the init_models]",file=standardout)
         for i in range(self.n_users):
             producers[i].flush()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for user_i in range(self.n_users):
                 executor.submit(self.users[user_i].find_best_cluster)
+        with open("out",'a') as standardout:
+            print("[Find best sent]",file=standardout)
         #producer.flush()
         for i in range(self.n_users):
             producers[i].flush()
-        if (KConsumer.partitions_for_topic('w2m')):
-            ps = [TopicPartition('w2m', p) for p in KConsumer.partitions_for_topic('w2m')]
-            KConsumer.resume(*ps)
+        #startcons = threading.Thread(target=consumer, args=(self.n_users,))
+        #startcons.start()
         consumer(self.n_users)
-        ps = [TopicPartition('w2m', p) for p in KConsumer.partitions_for_topic('w2m')]
-        KConsumer.pause(*ps)
+        #if (KConsumer.partitions_for_topic('w2m')):
+        #    #ps = [TopicPartition('w2m', p) for p in KConsumer.partitions_for_topic('w2m')]
+        #    #KConsumer.resume(*ps)
+        #consumer(self.n_users)
+        #ps = [TopicPartition('w2m', p) for p in KConsumer.partitions_for_topic('w2m')]
+        #KConsumer.pause(*ps)
+        
+        
     def recieve_combs(self,cluster):
         self.final_clusters.append(cluster)
         if len(self.final_clusters)==len(topics): 
@@ -90,6 +103,7 @@ class KCluster:
             
             with open("out",'a') as standardout:
                print("ERROR",err,file=standardout)
+               print("Cluster",self.cluster,file=standardout)
     
     def ret_cen(self):
         #final_clusters = np.array(self.final_clusters)
@@ -106,11 +120,9 @@ class User:
         self.producer.send(self.topic,{'fun':'userinit','n_sw':n_sw})   #producer.send(self.topic,{'fun':'userinit','n_sw':n_sw})
     def init_model(self,combs):
         #global producer
-        self.topic=topic
         self.producer.send(self.topic,{'fun':'initmodel','combs':combs.tolist()})   #producer.send(self.topic,{'fun':'initmodel','combs':combs.tolist()})
     def find_best_cluster(self):
         #global producer
-        self.topic=topic
         self.producer.send(self.topic,{'fun':'findbestcluster'})    #producer.send(self.topic,{'fun':'findbestcluster'})
         
 def consumer(nw):
@@ -125,9 +137,12 @@ def consumer(nw):
         cluster_a=(clusters,err)
         cluster.recieve_combs(cluster_a)
         cnt+=1
+        #with open("out",'a') as standardout:
+        #    print("received",cnt,file=standardout,flush=True)
         if cnt==nw:
             break
-        
+    KConsumer.close()
+    
 @app.route('/api/master/km/start/<string:workers>', methods = ['GET'])
 def start(workers):
     global cluster
@@ -138,20 +153,24 @@ def start(workers):
     preprocess(number_of_workers)
     with open("out",'a') as standardout:
         print("Starting processing\n",file=standardout)
-    topics=['m2w'+str(i) for i in range(len(number_of_workers))]
+    topics=['m2w'+str(i) for i in range(number_of_workers)]
+    #with open("out",'a') as stout:
+    #    print("topics",topics,file=stout,flush=True)
+        
     a=time.time()
     cluster = KCluster(n_users=number_of_workers,n_sw=int(abc[1]))
     pr = cProfile.Profile()
     pr.enable()
-    cluster.fit_cluster(dataset = dataset,k = 3,n_iters=int(abc[2]))
+    cluster.fit_cluster(dataset = dataset,k = 3,n_iters=60)
     pr.disable()
-
-    #with open("out",'a') as sys.stdout:
-    #    pr.print_stats()
+    
     b=time.time()
     with open("out",'a') as standardout:
             print("EXEC TIME:",b-a,'s',file=standardout)
             print("Means, Number of workers",cluster.ret_cen(),file=standardout)
+    #with open("out",'a') as sys.stdout:
+    #    pr.print_stats()
+        
     return flask.Response(status = 200)
     
     

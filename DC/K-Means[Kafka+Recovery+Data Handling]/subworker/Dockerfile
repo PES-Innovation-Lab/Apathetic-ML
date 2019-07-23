@@ -1,4 +1,4 @@
-FROM 192.168.0.10:8080/km_v3_worker
+FROM 192.168.0.10:8080/lr_v2_worker
 
 WORKDIR /app
 RUN cd /app && rm -r *

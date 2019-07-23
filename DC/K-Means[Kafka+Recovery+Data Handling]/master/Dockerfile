@@ -1,4 +1,4 @@
-FROM altariax0x01/km_master_res
+FROM 192.168.0.10:8080/lr_v2_master
 
 WORKDIR /app
 RUN cd /app && rm -r *

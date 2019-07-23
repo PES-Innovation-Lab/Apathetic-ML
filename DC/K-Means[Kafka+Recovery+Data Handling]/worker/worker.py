@@ -16,31 +16,32 @@ service_name = a[:a.find('-')]
 cont = 'controller:4000'
 path_to_run = ''          #directory here
 py_name = 'KM(Worker).py'   #fileName here
-args = ["python3", "{}{}".format(path_to_run, py_name),">","standardb"]
+args = ["python3", "{}{}".format(path_to_run, py_name)]
 lrw = None
+myid = service_name[-1]
+iplist = []
+#def state_check(controller,selfhost):
+    #ret = 'x'
+    #while (ret != '1' and ret != '0' ):
+            #try:
+                    #r = requests.get("http://"+controller+'/'+'api/check/state')
+                    #ret = r.content
+                    #ret = ret.decode("utf-8")
+            #except:
+                    #with open("out",'a') as std:
+                            #print("Request for state check to controller has failed",file=std)
+            #time.sleep(2)
+    #with open("out",'a') as std:
+            #print("State check complete. State is "+ret,file=std)
+    #if (ret == '1'):
+        #with open("out",'a') as std:
+                #print("Requesting data from server for restoration.",file=std)
+        #k = requests.get("http://"+controller+"/api/gimmepath")
+        #path = k.content;path = path.decode('utf-8')
+        #r = requests.get("http://"+"localhost"+'/'+'api/worker/start/'+str(path))
 
-def state_check(controller,selfhost):
-    ret = 'x'
-    while (ret != '1' and ret != '0' ):
-            try:
-                    r = requests.get("http://"+controller+'/'+'api/check/state')
-                    ret = r.content
-                    ret = ret.decode("utf-8")
-            except:
-                    with open("out",'a') as std:
-                            print("Request for state check to controller has failed",file=std)
-            time.sleep(2)
-    with open("out",'a') as std:
-            print("State check complete. State is "+ret,file=std)
-    if (ret == '1'):
-        with open("out",'a') as std:
-                print("Requesting data from server for restoration.",file=std)
-        k = requests.get("http://"+controller+"/api/gimmepath")
-        path = k.content;path = path.decode('utf-8')
-        r = requests.get("http://"+"localhost"+'/'+'api/worker/start/'+str(path))
-
-initw = threading.Thread(target=state_check, args=(cont,service_name+':4000'))
-initw.start()
+#initw = threading.Thread(target=state_check, args=(cont,service_name+':4000'))
+#initw.start()
 
 @app.route("/crash")
 def crasher():
@@ -58,15 +59,7 @@ def hello():
     (out, err) = proc.communicate()
     for item in out.decode('ascii').split('\n'):
         a += "<p>"+str(item)+"</p>"
-    a+="</div><div class=\"split right\">"
-    proc = subprocess.Popen(["cat", "standarda"], stdout=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    for item in out.decode('ascii').split('\n'):
-        a += "<p>"+str(item)+"</p>"
-    proc = subprocess.Popen(["cat", "standardb"], stdout=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    for item in out.decode('ascii').split('\n'):
-        a += "<p>"+str(item)+"</p>"
+    
     return a+"</div></html>"
 
 @app.route('/api/worker/start/<string:filepath>', methods = ['GET'])
@@ -87,31 +80,39 @@ def start(filepath):
         print("Output:",str(out.decode('ascii')),"Stderr:",str(err),file=std)
     return flask.Response(status=200)
 
-@app.route('/api/worker/begin')
-def begin():
-    global lrw
+@app.route('/api/worker/begin/<string:subworkers>')
+def begin(subworkers):
+    global lrw, iplist
+    iplist = ['http://subworker'+str(myid)+str(t)+':4000' for t in range(int(subworkers))]
     if lrw is not None:    #if process is running or has run before
         return flask.Response(status=409)   #code:conflict
     else:                   #process never run 
         with open("out",'a') as std:
             print("[BEGIN]",file=std)
         lrw=subprocess.Popen(args)
+        time.sleep(1)
+        for i in iplist:
+            requests.get(i+'/api/subworker/start')
         return flask.Response(status=202)
 
 @app.route('/api/worker/stop', methods = ['GET'])
 def stop():
-    global lrw
+    global lrw,iplist
     with open("out",'a') as std:
         print("[COMM] Stop request received",file=std)
         
     if lrw is not None:    #if process is running or has completed
         lrw.terminate()
         lrw=None
+        for i in iplist:
+            requests.get(i+'/api/subworker/stop')
         with open("out",'a') as std:
             print("[STATE] Terminated",file=std)
         
         return flask.Response(status=200)   #code:ok
     else:                   #process never run
+        for i in iplist:
+            requests.get(i+'/api/subworker/stop')
         with open("out",'a') as std:
             print("[INFO] Process wasn't running",file=std)
         
@@ -125,5 +126,5 @@ def reset():
         print("[RESET] Worker has been reset",file=std)
         
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=4000)
 

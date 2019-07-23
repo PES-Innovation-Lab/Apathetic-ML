@@ -1,22 +1,20 @@
-
 import numpy as np
 import pandas as pd
 from copy import deepcopy
 from kafka import KafkaConsumer,KafkaProducer,TopicPartition
 from json import dumps,loads
 import socket
-
+import concurrent.futures
 topics=[]
 this_host = socket.gethostname()
 myid = this_host[:this_host.find("-")]
 myid = myid[-1]
-producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
+producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092'])
 producers=[]
-KConsumer = KafkaConsumer('sw2w',bootstrap_servers=['kafka-service:9092'],group_id="worker",auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+KConsumer = KafkaConsumer('sw2w'+myid,bootstrap_servers=['kafka-service:9092'],group_id=None,auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
 mrtopic='m2w'+myid
 with open("out",'a') as standardout:
-    print("KM w Launched",mrtopic,file=standardout)
-
+    print("KM Launched",mrtopic,'sw2w'+myid,file=standardout)
 
 class User:
     def __init__(self,dataset):
@@ -65,12 +63,12 @@ class User:
         #producer.flush()
         for i in range(len(topics)):
             producers[i].flush()
-        if (KConsumer.partitions_for_topic('sw2w')):
-            ps = [TopicPartition('sw2w', p) for p in KConsumer.partitions_for_topic('sw2w')]
-            KConsumer.resume(*ps)
+        #if (KConsumer.partitions_for_topic('sw2w'+myid)):
+        #    ps = [TopicPartition('sw2w'+myid, p) for p in KConsumer.partitions_for_topic('sw2w'+myid)]
+        #    KConsumer.resume(*ps)
         a=consumersw(len(topics),means)
-        ps = [TopicPartition('sw2w', p) for p in KConsumer.partitions_for_topic('sw2w')]
-        KConsumer.pause(*ps)
+        #ps = [TopicPartition('sw2w'+myid, p) for p in KConsumer.partitions_for_topic('sw2w'+myid)]
+        #KConsumer.pause(*ps)
         return a
         
 def classify(dataset,means,topic,producer):  #def classify(dataset,means,topic):
@@ -85,23 +83,26 @@ def consumersw(nw,means):
         x=msg.value
         futures.append(x['cluster'])
         cnt+=1
+        #with open('out','a') as stout:
+        #    print("Received",cnt,file=stout,flush=True)
         if cnt==nw:
             break
     a=futures[0]
     for i in range(len(means)):
         for j in range(1,len(futures)):
-            a[i].extend(futures[j].result()[i])
+            a[i].extend(futures[j][i])
     return np.array(a)
 
     
 if __name__ == '__main__':
-    global producer
-    global mrtopic
-    global topics
+    #global producer,mrtopic,topics,myid
+
     user=None
-    consumer = KafkaConsumer(mrtopic,bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    consumer = KafkaConsumer(mrtopic,bootstrap_servers=['kafka-service:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     for msg in consumer:
         x=msg.value
+        with open('out','a') as stout:
+            print("Received a message",x['fun'],file=stout,flush=True)
         if x['fun']=='userinit':
             dataset = pd.read_csv('cars.csv')
             dataset = dataset.iloc[:,0:7].values
@@ -111,13 +112,13 @@ if __name__ == '__main__':
             dataset = sc_X.fit_transform(dataset)
             dataset = np.array(dataset.tolist())
             n_sw=x['n_sw']
-            topics=['w2sw'+str(i) for i in range(n_sw)]
+            topics=['w2sw'+myid+str(i) for i in range(n_sw)]
             producers=[KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092']) for i in range(n_sw)]
             user=User(dataset)
         elif x['fun']=='initmodel':
             combs=np.array(x['combs'])
             user.init_model(combs)
-        elif x['fun']=='fitmodel':
+        elif x['fun']=='findbestcluster':
             ret_clusters,err=user.find_best_cluster()
             cluster = []
             for i in ret_clusters:
