@@ -29,8 +29,8 @@ spec:
               mountPath: /dev/core/
             - name: local-store
               mountPath: /dev/pers/
-          image: altariax0x01/rf_worker_res
-          imagePullPolicy: IfNotPresent
+          image: 192.168.0.10:8080/rf_v2_worker
+          imagePullPolicy: Always
           env:
             - name: GET_HOSTS_FROM
               value: dns
@@ -85,8 +85,8 @@ spec:
               mountPath: /dev/shadow/data
             - name: local-store
               mountPath: /dev/pers/
-          image: altariax0x01/rf_controller
-          imagePullPolicy: IfNotPresent
+          image: 192.168.0.10:8080/rf_v2_controller
+          imagePullPolicy: Always
           env:
             - name: GET_HOSTS_FROM
               value: dns
@@ -138,8 +138,8 @@ spec:
               mountPath: /dev/shadow/data
             - name: local-store
               mountPath: /dev/pers/
-          image: altariax0x01/rf_master_res
-          imagePullPolicy: IfNotPresent
+          image: 192.168.0.10:8080/rf_v2_master
+          imagePullPolicy: Always
           env:
             - name: GET_HOSTS_FROM
               value: dns

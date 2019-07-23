@@ -53,15 +53,7 @@ def hello():
     (out, err) = proc.communicate()
     for item in out.decode('ascii').split('\n'):
         a += "<p>"+str(item)+"</p>"
-    a+="</div><div class=\"split right\">"
-    proc = subprocess.Popen(["cat", "standarda"], stdout=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    for item in out.decode('ascii').split('\n'):
-        a += "<p>"+str(item)+"</p>"
-    proc = subprocess.Popen(["cat", "standardb"], stdout=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    for item in out.decode('ascii').split('\n'):
-        a += "<p>"+str(item)+"</p>"
+    
     return a+"</div></html>"
 
 @app.route('/api/startdeploy', methods = ['POST'])
@@ -94,15 +86,7 @@ def start():
             (out, err) = proc.communicate()
             with open("out",'a') as std:
                 print("Output:",str(out.decode('ascii')),"Stderr:",str(err),file=std)
-            # proc = subprocess.Popen(["cd",'/dev/shadow/data/'],stdout=subprocess.PIPE)
-            # (out, err) = proc.communicate()
-            # with open("out",'a') as std:
-            #     print("Output:",str(out.decode('ascii')),"Stderr:",str(err),file=std)
-
-            # proc = subprocess.Popen(["ls"],stdout=subprocess.PIPE)
-            # (out, err) = proc.communicate()
-            # with open("out",'a') as std:
-            #     print("Output:",str(out.decode('ascii')),"Stderr:",str(err),file=std)
+            
             
             files = os.listdir('/dev/core/data')
             for item in files:

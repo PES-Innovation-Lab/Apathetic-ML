@@ -1,64 +1,60 @@
-
 import numpy as np
 import pandas as pd
-from sklearn.tree import DecisionTreeClassifier as DT
-import operator
-import pickle
 import requests
 import flask
 import threading
-import concurrent.futures
-from sklearn.metrics import confusion_matrix
 import time
-from flask_cors import  CORS
-from kafka import KafkaConsumer,KafkaProducer
-from json import dumps,loads
-import ast
-
+from flask_cors import CORS
+import concurrent.futures
 app = flask.Flask(__name__)
 CORS(app)
-#iplist=["http://127.0.0.1:5000","http://127.0.0.1:7000"]
-#CS
-producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
-#topics=['m2w1','m2w2']
 topics=[]
-'''
-s = 'http://worker'
-iplist = []
 
-thread_local = threading.local()
+def imports():
+    global DT,operator,pickle,confusion_matrix,KafkaConsumer,KafkaProducer,dumps,loads,ast,Process,Queue,encode,decode
+    from sklearn.tree import DecisionTreeClassifier as DT
+    import operator
+    import pickle
+    from sklearn.metrics import confusion_matrix
+    from kafka import KafkaConsumer,KafkaProducer
+    from json import dumps,loads
+    import ast
+    from multiprocessing import Process, Queue
+    from jsonpickle import encode,decode
 
-def get_session():
-    if not hasattr(thread_local, "session"):
-        thread_local.session = requests.Session()
-    return thread_local.session
-'''
-#CE
-# Importing the dataset
-dataset = pd.read_csv('Social_Network_Ads.csv')
-X = dataset.iloc[:, [2, 3]].values
-y = dataset.iloc[:, 4].values
+def preprocess():
+    global producer,dataset,X_train,X_test,y_test,y_train
+    producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092'])
+    # Importing the dataset
+    dataset = pd.read_csv('Social_Network_Ads.csv')
+    X = dataset.iloc[:, [2, 3]].values
+    y = dataset.iloc[:, 4].values
 
-# Splitting the dataset into the Training set and Test set
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, random_state = 0)
+    # Splitting the dataset into the Training set and Test set
+    from sklearn.model_selection import train_test_split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.25, random_state = 0)
 
-# Feature Scaling
-from sklearn.preprocessing import StandardScaler
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.transform(X_test)
+    # Feature Scaling
+    from sklearn.preprocessing import StandardScaler
+    sc = StandardScaler()
+    X_train = sc.fit_transform(X_train)
+    X_test = sc.transform(X_test)
 
+def file_reader(q,i):
+    try:
+        loaded_model = pickle.load(open('/dev/core/files/'+i, 'rb'))
+        q.put(loaded_model)
+    except Exception as e:
+        time.sleep(5)
+        loaded_model = pickle.load(open('/dev/core/files/'+i, 'rb'))
+        q.put(loaded_model)
 
 class RF:
     def __init__(self,n_users):
         self.n_users = n_users
-    def fit(self,n_trees,X,X_test,y,y_test):
-        #CS        
+    def fit(self,n_trees,X,X_test,y,y_test):      
         global topics
         global producer
-        #global iplist
-        #CE
         self.n_trees = n_trees
         self.X = X
         self.y = y
@@ -67,45 +63,38 @@ class RF:
         a = time.time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for i in range(self.n_users):
-                #futures.append(executor.submit(User,self.n_trees//self.n_users,X,y,iplist[i]))
-                #CS
                 futures.append(executor.submit(User,self.n_trees//self.n_users,topics[i]))
         producer.flush()
-        #CE
+        
         with open("out",'a') as standardout:
             print("FIRST FOR",time.time()-a,file=standardout)
             
         for i in futures:
             users.append(i.result())
-        #users = [User(self.n_trees//self.n_users,X,y) for i in range(self.n_users)]
-        #CS
-        '''
-        dts = []
-        futures = []
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            for i in range(self.n_users):
-                futures.append(executor.submit(users[i].fit,i))
-        with open("out",'a') as standardout:
-            print("SECOND FOR",time.time()-a,file=standardout)
         
-        for i in futures:
-            dts.extend(i.result())
-        '''
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future=executor.submit(consumer,self.n_users)
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                for user_i in range(self.n_users):
-                    executor.submit(users[i].fit)
-            producer.flush()
+            for user_i in range(self.n_users):
+                executor.submit(users[user_i].fit)
+                
+        producer.flush()
+        self.DTs = consumer(self.n_users)
+
         with open("out",'a') as standardout:
             print("SECOND FOR",time.time()-a,file=standardout)
-        dts=future.result()
-        #for i in range(self.n_users):
-        #    dts.extend(users[i].fit(i))
-        self.DTs = []
-        for i in dts:
-            loaded_model = pickle.load(open('/dev/core/files/'+i, 'rb'))
-            self.DTs.append(loaded_model)
+
+        # dts=res
+       
+        # self.DTs = []
+        # proc = []
+        # for i in dts:
+        #     p = Process(target=file_reader,args=(q,i))
+        #     p.start()
+        #     proc.append(p)
+
+        # for i in range(len(proc)):
+        #     proc[i].join()
+        #     self.DTs.append(q.get())
+
         b = time.time()
         with open("out",'a') as standardout:
             print("TIME TO EXEC:",b-a,file=standardout)
@@ -127,87 +116,50 @@ class RF:
             res.append(max(res_dict.items(), key=operator.itemgetter(1))[0])
         return res
 
-#CS
 class User:
-    #def __init__(self,n_trees,X,y,ip):
     def __init__(self,n_trees,topic):
         global producer
         self.topic=topic
         producer.send(self.topic,{'fun':'userinit','n_trees':n_trees})
-        '''
-        self.n_trees = n_trees
-        self.X = X
-        self.y = y
-        
-        sesh=get_session()
-        self.ip=ip    
-        url = self.ip+'/api/worker/rf/userinit'       #send train dataset and labels to worker nodes
-        #sesh.post(url,json={'n_trees':n_trees,'X':X.tolist(),'y':y.tolist()})
-        sesh.post(url,json={'n_trees':n_trees})
-        '''
         
     def fit(self):
         global producer
-        self.topic=topic
+        #self.topic=topic
         producer.send(self.topic,{'fun':'workerfit'})
-        '''
-        sesh=get_session()
-        url = self.ip+'/api/worker/rf/workerfit'       #send train dataset and labels to worker nodes
-        r=sesh.post(url,json={'user_i':user_i})
-        return r.json()['dts']
         
-        datasets =[]
-        DTs = []
-        s = str(user_i)+'_'
-        for i in range(self.n_trees):
-            data_indeces = np.random.randint(0,self.X.shape[0],self.X.shape[0])
-            y_indeces = np.random.randint(0,X.shape[1],np.random.randint(1,X.shape[1],1)[0])
-            temp_d = DT(criterion='entropy')
-            temp_d.fit(self.X[data_indeces,y_indeces].reshape(data_indeces.shape[0],y_indeces.shape[0]),self.y[data_indeces])
-            DTs.append((temp_d,y_indeces))
-        dts = []
-        for i in range(len(DTs)):
-            t_file_name = s+str(i)+'.pkl'
-            d_temp_file = open(t_file_name, 'wb')
-            pickle.dump(DTs[i], d_temp_file)
-            dts.append(t_file_name)
-        return dts
-        '''
-        
+
 def consumer(nw):
-    consumer = KafkaConsumer('w2m',bootstrap_servers=['localhost:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    Kconsumer = KafkaConsumer('w2m',bootstrap_servers=['kafka-service:9092'],group_id='master',auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))  
     cnt=0
     dts=[]
-    for msg in consumer:
-        x=ast.literal_eval(msg.value)
-        if cnt!=nw:
-            dts.extend(x['dts'])
-            cnt+=1
-        else:
+    for msg in Kconsumer:
+        x=msg.value
+        x = decode(x['dts'])
+        for item in x:
+            dts.append(item)
+        cnt+=1
+        if (cnt == nw):
             break
-    consumer.close()
+    Kconsumer.close()
     return dts
-#CE
 
 @app.route('/api/master/rf/start/<string:workers>', methods = ['GET'])
 def start(workers):
+    imports()
+    preprocess()
     global X_test
     global X_train
     global y_test
     global y_train
-    #CS
-    #global iplist
+  
     global topics
-
-    #iplist = [s+str(i)+':5000' for i in range(0,int(workers))] 
     topics=['m2w'+str(i) for i in range(int(workers))]
-    #CE
+    with open('out','a') as stout:
+        print("Working with ", workers," workers",file=stout)
     rf = RF(int(workers))
-    
-    
-    #rf.fit(100,X_train,y_train)
-    initw = threading.Thread(target=rf.fit, args=(240,X_train,X_test,y_train,y_test))
-    initw.start() 
+    rf.fit(240,X_train,X_test,y_train,y_test)
+    #initw = threading.Thread(target=rf.fit, args=(240,X_train,X_test,y_train,y_test))
+    #initw.start() 
     return flask.Response(status = 200)
 
 if __name__ == '__main__':

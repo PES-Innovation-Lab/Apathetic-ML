@@ -1,0 +1,29 @@
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: kafka-broker0
+spec:
+  template:
+    metadata:
+      labels:
+        app: kafka
+        id: "0"
+    spec:
+      containers:
+      - name: kafka
+        image: 192.168.0.10:8080/kafka     ##LOCAL
+        #image: altariax0x01/kafka                             ##CLOUD
+        ports:
+        - containerPort: 9092
+        - containerPort: 4000
+        env:
+        - name: KAFKA_ADVERTISED_PORT
+          value: "9092"
+        - name: KAFKA_ADVERTISED_HOST_NAME
+          value: kafka-service
+        - name: KAFKA_ZOOKEEPER_CONNECT
+          value: zoo1:2181
+        - name: KAFKA_BROKER_ID
+          value: "0"
+        command: ["sh","start.sh"]

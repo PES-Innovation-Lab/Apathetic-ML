@@ -16,31 +16,31 @@ service_name = a[:a.find('-')]
 cont = 'controller:4000'
 path_to_run = ''          #directory here
 py_name = 'RF(Worker).py'   #fileName here
-args = ["python3", "{}{}".format(path_to_run, py_name),">","standardb"]
+args = ["python3", "{}{}".format(path_to_run, py_name)]
 lrw = None
 
-def state_check(controller,selfhost):
-    ret = 'x'
-    while (ret != '1' and ret != '0' ):
-            try:
-                    r = requests.get("http://"+controller+'/'+'api/check/state')
-                    ret = r.content
-                    ret = ret.decode("utf-8")
-            except:
-                    with open("out",'a') as std:
-                            print("Request for state check to controller has failed",file=std)
-            time.sleep(2)
-    with open("out",'a') as std:
-            print("State check complete. State is "+ret,file=std)
-    if (ret == '1'):
-        with open("out",'a') as std:
-                print("Requesting data from server for restoration.",file=std)
-        k = requests.get("http://"+controller+"/api/gimmepath")
-        path = k.content;path = path.decode('utf-8')
-        r = requests.get("http://"+"localhost:4000"+'/'+'api/worker/start/'+str(path))
+# def state_check(controller,selfhost):
+#     ret = 'x'
+#     while (ret != '1' and ret != '0' ):
+#             try:
+#                     r = requests.get("http://"+controller+'/'+'api/check/state')
+#                     ret = r.content
+#                     ret = ret.decode("utf-8")
+#             except:
+#                     with open("out",'a') as std:
+#                             print("Request for state check to controller has failed",file=std)
+#             time.sleep(2)
+#     with open("out",'a') as std:
+#             print("State check complete. State is "+ret,file=std)
+#     if (ret == '1'):
+#         with open("out",'a') as std:
+#                 print("Requesting data from server for restoration.",file=std)
+#         k = requests.get("http://"+controller+"/api/gimmepath")
+#         path = k.content;path = path.decode('utf-8')
+#         r = requests.get("http://"+"localhost:4000"+'/'+'api/worker/start/'+str(path))
 
-initw = threading.Thread(target=state_check, args=(cont,service_name+':4000'))
-initw.start()
+# initw = threading.Thread(target=state_check, args=(cont,service_name+':4000'))
+# initw.start()
 
 @app.route("/crash")
 def crasher():
@@ -53,20 +53,11 @@ def crasher():
 @app.route('/')
 def hello():
     a = socket.gethostname()
-    a= "<html><meta http-equiv=\"refresh\" content=\"5\" ><style>.split {height: 100%;width: 50%;position: fixed;z-index: 1;top: 0;overflow-x: hidden;padding-top: 100px;} .left {left: 0;} .right {right: 0;}</style><h1>Worker - Running</h1><h2>Host Name: "+str(a)+"</h2><div class=\"split left\">"
+    a= "<html><style>.split {height: 100%;width: 50%;position: fixed;z-index: 1;top: 0;overflow-x: hidden;padding-top: 100px;} .left {left: 0;} .right {right: 0;}</style><h1>Worker - Running</h1><h2>Host Name: "+str(a)+"</h2><div class=\"split left\">"
     proc = subprocess.Popen(["cat", "out"], stdout=subprocess.PIPE)
     (out, err) = proc.communicate()
     for item in out.decode('ascii').split('\n'):
         a += "<p>"+str(item)+"</p>"
-    # a+="</div><div class=\"split right\">"
-    # proc = subprocess.Popen(["cat", "standarda"], stdout=subprocess.PIPE)
-    # (out, err) = proc.communicate()
-    # for item in out.decode('ascii').split('\n'):
-    #     a += "<p>"+str(item)+"</p>"
-    # proc = subprocess.Popen(["cat", "standardb"], stdout=subprocess.PIPE)
-    # (out, err) = proc.communicate()
-    # for item in out.decode('ascii').split('\n'):
-    #     a += "<p>"+str(item)+"</p>"
     return a+"</div></html>"
 
 @app.route('/api/worker/start/<string:filepath>', methods = ['GET'])

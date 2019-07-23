@@ -1,4 +1,3 @@
-
 import flask
 import requests
 import subprocess
@@ -16,7 +15,6 @@ args = ["python3", "{}{}".format(path_to_run, py_name),">","standardb"]
 
 lrm=None
 
-#iplist=["http://127.0.0.1:3000","http://127.0.0.1:6000"]
 s = 'http://worker'
 iplist = []
 
@@ -25,23 +23,21 @@ sesh=requests.Session()
 os.system("touch out")
 os.system("mkdir -p /dev/core/files")
 
+@app.route('/api/master/clear')
+def fresh():
+    os.system("echo '' > out")
+    return flask.Response(status= 200)
+
 @app.route('/')
 def hello():
     a = socket.gethostname()
-    a= "<html><meta http-equiv=\"refresh\" content=\"5\" ><style>.split {height: 100%;width: 50%;position: fixed;z-index: 1;top: 0;overflow-x: hidden;padding-top: 100px;} .left {left: 0;} .right {right: 0;}</style><h1>Master - Running</h1><h2>Host Name: "+str(a)+"</h2><div class=\"split left\">"
-    proc = subprocess.Popen(["tac", "out"], stdout=subprocess.PIPE)
+    a= "<html><style>.split {height: 100%;width: 50%;position: fixed;z-index: 1;top: 0;overflow-x: hidden;padding-top: 100px;} .left {left: 0;} .right {right: 0;}</style><h1>Master - Running</h1><h2>Host Name: "+str(a)+"</h2><div class=\"split left\">"
+    proc = subprocess.Popen(["cat", "out"], stdout=subprocess.PIPE)
     (out, err) = proc.communicate()
     for item in out.decode('ascii').split('\n'):
         a += "<p>"+str(item)+"</p>"
     a+="</div><div class=\"split right\">"
-    #proc = subprocess.Popen(["tac", "standarda"], stdout=subprocess.PIPE)
-    #(out, err) = proc.communicate()
-    #for item in out.decode('ascii').split('\n'):
-    #    a += "<p>"+str(item)+"</p>"
-    #proc = subprocess.Popen(["cat", "standardb"], stdout=subprocess.PIPE)
-    #(out, err) = proc.communicate()
-    #for item in out.decode('ascii').split('\n'):
-    #   a += "<p>"+str(item)+"</p>"
+    
     return a+"</div></html>"
 
 @app.route('/api/master/start/<string:workers>', methods = ['GET'])
@@ -54,7 +50,7 @@ def start(workers):
         return flask.Response(status=409)   #code:conflict
     else:                   #process never run    
         lrm=subprocess.Popen(args)     #start lr(master) api
-        time.sleep(4)
+        time.sleep(3)
         with open("out",'a') as standardout:
             print("Starting Tasks ",file=standardout)
     
@@ -62,10 +58,11 @@ def start(workers):
             url = ip+'/api/worker/begin'
             initw = threading.Thread(target=sesh.get, args=(url,))
             initw.start()                   #start lr(worker) api
-            time.sleep(4)
+            time.sleep(1)
         url='http://localhost:5000/api/master/rf/start'+'/'+str(workers)
-        initmodel = threading.Thread(target=sesh.get, args=(url,))
-        initmodel.start()               #begin training
+        #initmodel = threading.Thread(target=sesh.get, args=(url,))
+        #initmodel.start()               #begin training
+        requests.get(url)
         return flask.Response(status=202)   #code:accepted
 
 @app.route('/api/master/stop', methods = ['GET'])
@@ -80,8 +77,15 @@ def stop():
             #stopw.start()
         lrm.terminate()
         lrm=None
+        fresh()
+        try:
+            requests.get("http://kafka-service:4000/erase")
+        except Exception as e:
+            with open("out",'a') as standardout:
+                print("Something happened",e.message,e.args,file=standardout)
+            
         with open("out",'a') as standardout:
-            print("Stopping the entire operation\n",file=standardout)
+            print("Stopped the entire operation\n",file=standardout)
 
         return flask.Response(status=200)   #code:ok
     else:                   #process never run
