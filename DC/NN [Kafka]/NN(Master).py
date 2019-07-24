@@ -25,7 +25,7 @@ def imports():
     
     
 def preprocess(workers):
-    global X_train,y_train,X_test,y_test,X_train_flat,X_test_flat,y_train_oh,producers,KConsumer
+    global X_train,y_train,X_test,y_test,X_train_flat,X_test_flat,y_train_oh,producers,KConsumer,KConsumer1
     (X_train,y_train),(X_test,y_test) = mnist.load_data()
     X_train_flat = X_train.reshape((X_train.shape[0],-1))
     X_test_flat  = X_test.reshape((X_test.shape[0],-1))
@@ -87,7 +87,8 @@ class Sequential:
                 json_file.write(model_json)
             self.model.save_weights("model.h5")
             '''
-            jsonmodel=encode(model)
+            jsonmodel=encode(self.model)
+            
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 for _ in range(self.n_users):
                     executor.submit(self.users[_].compile,optimizer,loss,metrics,jsonmodel)

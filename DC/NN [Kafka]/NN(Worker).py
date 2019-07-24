@@ -1,16 +1,17 @@
 import socket
+from kafka import KafkaConsumer
+#from keras import *
 
 def imports():
-    global np,Dense,tf,K,model_from_json,load_model,Graph,Session,acc_score,KafkaConsumer,KafkaProducer,dumps,loads,encode,decode,producer
+    global np,Dense,tf,K,model_from_json,load_model,Graph,Session,acc_score,KafkaProducer,dumps,loads,encode,decode,producer
     import numpy as np
-    #from keras import *
     from keras.layers import Dense
     import tensorflow as tf
     from keras import backend as K
     from keras.models import model_from_json
     from keras.models import load_model
     from tensorflow import Graph,Session
-    from kafka import KafkaConsumer,KafkaProducer
+    from kafka import KafkaProducer
     from json import dumps,loads
     from sklearn.metrics import accuracy_score as acc_score
     from jsonpickle import encode,decode
@@ -32,6 +33,8 @@ with open("out",'a') as standardout:
 class User:
     
     def __init__(self):
+        imports()
+        
         self.graph = Graph()
         
         with self.graph.as_default():
@@ -85,7 +88,6 @@ class User:
 
 
 if __name__ == '__main__':
-    imports()
     user=None
     consumer = KafkaConsumer(rtopic,bootstrap_servers=['kafka-service:9092'],group_id=rtopic,auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     for msg in consumer:
