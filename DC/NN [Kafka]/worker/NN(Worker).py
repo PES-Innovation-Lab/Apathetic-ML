@@ -100,7 +100,8 @@ class User:
             loaded_model.load_weights("model.h5")
             self.model = loaded_model
             '''
-            model = decompressBytesToString(model.decode('utf-8'))
+            #model = decompressBytesToString(model.encode('utf-8'))
+            model = decompressBytesToString(model)
             self.model=decode(model)
             with open('out','a') as stout:
                 print(optimizer,loss,metrics,file=stout)
@@ -128,7 +129,9 @@ class User:
         K.set_session(self.sess)
 
         with self.graph.as_default():
-            encmodel = compressStringToBytes(encode(self.model)).encode('utf-8')
+            jsonmodel=encode(self.model)
+            #jsonmodel = compressStringToBytes(jsonmodel).decode('utf-8')
+            encmodel = compressStringToBytes(jsonmodel)
             return encmodel
             #self.model.save_weights('best_model.h5')
 
@@ -136,7 +139,8 @@ class User:
         K.set_session(self.sess)
 
         with self.graph.as_default():
-            model = decompressBytesToString(model.decode('utf-8'))
+            #model = decompressBytesToString(model.encode('utf-8'))
+            model = decompressBytesToString(model)
             self.model=decode(model)
             #self.model.load_weights('best_model.h5')
 
