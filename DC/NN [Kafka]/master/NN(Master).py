@@ -1,8 +1,7 @@
 
 import flask
 import concurrent.futures
-import gzip
-from io import StringIO, BytesIO
+
 def decompressBytesToString(inputBytes):
   """
   decompress the given byte array (which must be valid
@@ -36,8 +35,9 @@ def compressStringToBytes(inputString):
       compressor.close()
       return stream.getvalue()
     compressor.write(chunk)
+    
 def imports():
-    global np,keras,Dense,mnist,tf,K,model_from_json,load_model,Graph,Session,time,acc_score,KafkaProducer,KafkaConsumer,TopicPartition,dumps,loads,cProfile,sys,encode,decode
+    global np,keras,Dense,mnist,tf,K,model_from_json,load_model,Graph,Session,time,acc_score,KafkaProducer,KafkaConsumer,TopicPartition,dumps,loads,cProfile,sys,encode,decode,gzip,StringIO,BytesIO
     import numpy as np
     import keras
     from keras.layers import Dense
@@ -54,17 +54,21 @@ def imports():
     import sys
     from sklearn.metrics import accuracy_score as acc_score
     from jsonpickle import encode,decode
+    import gzip
+    from io import StringIO, BytesIO
 
     tf.reset_default_graph()
 
-
 def preprocess(workers):
-    global X_train,y_train,X_test,y_test,X_train_flat,X_test_flat,y_train_oh,producers,KConsumer,KConsumer1
+    #global X_train,y_train,X_test,y_test,X_train_flat,y_train_oh
+    global X_test_flat
+    global producers,KConsumer,KConsumer1
+    
     (X_train,y_train),(X_test,y_test) = mnist.load_data()
-    X_train_flat = X_train.reshape((X_train.shape[0],-1))
+    #X_train_flat = X_train.reshape((X_train.shape[0],-1))
     X_test_flat  = X_test.reshape((X_test.shape[0],-1))
-    y_train_oh = keras.utils.to_categorical(y_train,10)
-
+    #y_train_oh = keras.utils.to_categorical(y_train,10)
+    
     producers=[KafkaProducer(acks=True,value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092']) for i in range(workers)]
     KConsumer = KafkaConsumer('w2m',bootstrap_servers=['kafka-service:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     KConsumer1 = KafkaConsumer('w2m1',bootstrap_servers=['kafka-service:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
@@ -98,7 +102,7 @@ class Sequential:
         futures=[]
         with concurrent.futures.ThreadPoolExecutor() as executor:
             for _ in range(n_users):
-                futures.append(executor.submit(User,topics[_],producers[_]))
+                futures.append(executor.submit(User,topics[_],producers[_],self.n_users,self.steps))
         for i in futures:
             self.users.append(i.result())
         for i in range(self.n_users):
@@ -131,9 +135,9 @@ class Sequential:
             for i in range(self.n_users):
                 producers[i].flush()
 
-    def fit(self , X_train , y_train , X_test , y_test , batch_size = None , epochs = None):
-        X_train_split = np.array([np.split(_,self.steps) for _ in np.split(X_train,self.n_users)])
-        y_train_split = np.array([np.split(_,self.steps) for _ in np.split(y_train,self.n_users)])
+    def fit(self ,batch_size = None , epochs = None):    #def fit(self , X_train , y_train , X_test , y_test , batch_size = None , epochs = None):
+        #X_train_split = np.array([np.split(_,self.steps) for _ in np.split(X_train_flat,self.n_users)])
+        #y_train_split = np.array([np.split(_,self.steps) for _ in np.split(y_train_oh,self.n_users)])
         batch_size_step = batch_size
 
         for epoch_i in range(epochs):
@@ -147,13 +151,13 @@ class Sequential:
                     for user_i in range(self.n_users):
                         with open('out','a') as stout:
                             print('USER : ' + str(user_i + 1),file=stout)
-                        executor.submit(self.users[user_i].fit, X_train_split[user_i][step_i], y_train_split[user_i][step_i], 1, batch_size_step)
+                        executor.submit(self.users[user_i].fit, user_i, step_i, 1, batch_size_step) #executor.submit(self.users[user_i].fit, X_train_split[user_i][step_i], y_train_split[user_i][step_i], 1, batch_size_step)
                 for i in range(self.n_users):
                     producers[i].flush()
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     for user_i in range(self.n_users):
-                        executor.submit(self.users[user_i].accuracy_score,X_test,y_test)
+                        executor.submit(self.users[user_i].accuracy_score)  #executor.submit(self.users[user_i].accuracy_score,X_test,y_test)
                 for i in range(self.n_users):
                     producers[i].flush()
                 if (KConsumer.partitions_for_topic('w2m')):
@@ -198,19 +202,19 @@ class Sequential:
 
 class User:
 
-    def __init__(self, topic, producer):
+    def __init__(self, topic, producer,n_users,steps):
         self.topic=topic
         self.producer=producer
-        self.producer.send(self.topic,{'fun':'userinit'})
+        self.producer.send(self.topic,{'fun':'userinit','n_users':n_users,'step':steps})
 
     def compile(self , optimizer , loss , metrics,jsonmodel):
         self.producer.send(self.topic,{'fun':'usercompile','optimizer':optimizer,'loss':loss,'metrics':metrics,'model':jsonmodel})
 
-    def fit(self , X_train , y_train , epochs = 1 , batch_size = None):
-        self.producer.send(self.topic,{'fun':'userfit','X_train':X_train.tolist(),'y_train':y_train.tolist(),'epochs':epochs,'batch_size':batch_size})
+    def fit(self , user_i , step_i , epochs = 1 , batch_size = None): #def fit(self , X_train , y_train , epochs = 1 , batch_size = None):
+        self.producer.send(self.topic,{'fun':'userfit','user_i':user_i,'step_i':step_i,'epochs':epochs,'batch_size':batch_size}) #self.producer.send(self.topic,{'fun':'userfit','X_train':X_train.tolist(),'y_train':y_train.tolist(),'epochs':epochs,'batch_size':batch_size})
 
-    def accuracy_score(self , X_test , y_test):
-        self.producer.send(self.topic,{'fun':'accuracyscore','X_test':X_test.tolist(),'y_test':y_test.tolist()})
+    def accuracy_score(self): #def accuracy_score(self , X_test , y_test):
+        self.producer.send(self.topic,{'fun':'accuracyscore'})    #self.producer.send(self.topic,{'fun':'accuracyscore','X_test':X_test.tolist(),'y_test':y_test.tolist()})
 
     def best_model(self):
         self.producer.send(self.topic,{'fun':'bestmodel'})
@@ -268,7 +272,7 @@ def start(workers):
     pr = cProfile.Profile()
     pr.enable()
 
-    model.fit(X_train_flat , y_train_oh , X_test_flat , y_test , batch_size = 10 , epochs = 20)
+    model.fit(batch_size = 10 , epochs = 20)
 
     pr.disable()
 
@@ -287,3 +291,4 @@ def start(workers):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
