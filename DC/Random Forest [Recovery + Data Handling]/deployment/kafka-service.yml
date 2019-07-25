@@ -8,10 +8,17 @@ metadata:
 spec:
   ports:
   - port: 9092
+    name: kafka2-port
+    protocol: TCP
+  - port: 9091
+    name: kafka1-port
+    protocol: TCP
+  - port: 9090
     name: kafka-port
     protocol: TCP
-  - port: 4000
-    name: crasherport
+  - port: 9093
+    name: kafka3-port
+    protocol: TCP
   selector:
     app: kafka
     id: "0"

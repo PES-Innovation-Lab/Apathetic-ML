@@ -82,7 +82,7 @@ spec:
             - name: nfs-core
               mountPath: /dev/core/
             - name: nfs-shadow
-              mountPath: /dev/shadow/data
+              mountPath: /mnt/shadow/
             - name: local-store
               mountPath: /dev/pers/
           image: 192.168.0.10:8080/rf_v2_controller
@@ -135,7 +135,7 @@ spec:
             - name: nfs-core
               mountPath: /dev/core/
             - name: nfs-shadow
-              mountPath: /dev/shadow/data
+              mountPath: /mnt/shadow/
             - name: local-store
               mountPath: /dev/pers/
           image: 192.168.0.10:8080/rf_v2_master

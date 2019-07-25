@@ -31,12 +31,11 @@ def fresh():
 @app.route('/')
 def hello():
     a = socket.gethostname()
-    a= "<html><style>.split {height: 100%;width: 50%;position: fixed;z-index: 1;top: 0;overflow-x: hidden;padding-top: 100px;} .left {left: 0;} .right {right: 0;}</style><h1>Master - Running</h1><h2>Host Name: "+str(a)+"</h2><div class=\"split left\">"
+    a= "<html><h1>Master - Running</h1><h2>Host Name: "+str(a)+"</h2><div>"
     proc = subprocess.Popen(["cat", "out"], stdout=subprocess.PIPE)
     (out, err) = proc.communicate()
     for item in out.decode('ascii').split('\n'):
         a += "<p>"+str(item)+"</p>"
-    a+="</div><div class=\"split right\">"
     
     return a+"</div></html>"
 
@@ -78,11 +77,11 @@ def stop():
         lrm.terminate()
         lrm=None
         fresh()
-        try:
-            requests.get("http://kafka-service:4000/erase")
-        except Exception as e:
-            with open("out",'a') as standardout:
-                print("Something happened",e.message,e.args,file=standardout)
+        #try:
+        #    requests.get("http://kafka-service:4000/erase")
+        #except Exception as e:
+        #    with open("out",'a') as standardout:
+        #        print("Something happened",e.message,e.args,file=standardout)
             
         with open("out",'a') as standardout:
             print("Stopped the entire operation\n",file=standardout)

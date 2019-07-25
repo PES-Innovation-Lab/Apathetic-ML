@@ -11,8 +11,8 @@ spec:
     spec:
       containers:
       - name: zoo1
-        image: 192.168.0.10:8080/zookeeper  ##LOCAL
-        #image: digitalwonderland/zookeeper   ##CLOUD
+        #image: 192.168.0.10:8080/zookeeper  ##LOCAL
+        image: digitalwonderland/zookeeper   ##CLOUD
         ports:
         - containerPort: 2181
         env:

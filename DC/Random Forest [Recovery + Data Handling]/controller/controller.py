@@ -82,7 +82,7 @@ def start():
             (out, err) = proc.communicate()
             with open("out",'a') as std:
                 print("Output:",str(out.decode('ascii')),"Stderr:",str(err),file=std)
-            proc = subprocess.Popen(["./master_script.sh",json['splits'],'/dev/shadow/'+ json['filename'],json['header']],stdout=subprocess.PIPE)
+            proc = subprocess.Popen(["./master_script.sh",json['splits'],'/mnt/shadow/'+ json['filename'],json['header']],stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
             with open("out",'a') as std:
                 print("Output:",str(out.decode('ascii')),"Stderr:",str(err),file=std)
@@ -95,7 +95,7 @@ def start():
                 print(files,file=std)
         else:
             os.system('mkdir -p /dev/core/data')
-            proc = subprocess.Popen(["cp",'/dev/shadow/'+ json['filename'],'/dev/core/data/'+json['filename']],stdout=subprocess.PIPE)
+            proc = subprocess.Popen(["cp",'/mnt/shadow/'+ json['filename'],'/dev/core/data/'+json['filename']],stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
             file_list[json['filename']] = 0
             with open("out",'a') as std:

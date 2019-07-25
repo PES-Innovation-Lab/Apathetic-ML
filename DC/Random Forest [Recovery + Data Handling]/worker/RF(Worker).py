@@ -8,6 +8,7 @@ import time
 import gc
 from flask_cors import CORS
 from jsonpickle import encode,decode
+import socket
 def imports():
     global DT,Process,Queue,KafkaConsumer,KafkaProducer,dumps,loads,ast,producer
     from sklearn.tree import DecisionTreeClassifier as DT
@@ -15,7 +16,7 @@ def imports():
     from kafka import KafkaConsumer,KafkaProducer
     from json import dumps,loads
     import ast
-    producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092'])
+    producer = KafkaProducer(acks=True,value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092'])
 
 def file_dumper(q,t_file_name,item):
     d_temp_file = open('/dev/core/files/'+t_file_name, 'wb')
@@ -63,18 +64,23 @@ class User:
         #v = time.time()
         #with open("out",'a') as standardout:
         #    print("FIT TIME",v-z,file=standardout)
-        #with open("out",'a') as standardout:
-        #    print("FILE TIME",filestop-filestart,file=standardout)
+        with open("out",'a') as standardout:
+            print("FIT COMPLETE",file=standardout)
         return DTs
                 
 if __name__ == '__main__':
     imports()
     global producer
-    rtopic='m2w1'
+    a = socket.gethostname()
+    a = a[:a.find('-')]
+    a = a[-1]
+    rtopic='m2w'+a
     user=None
     consumer = KafkaConsumer(rtopic,bootstrap_servers=['kafka-service:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     for msg in consumer:
         x=msg.value
+        with open('out','a') as stout:
+            print("MSG",x['fun'],file=stout,flush=True)
         if x['fun']=='userinit':
             try:
                 with open("out",'a') as standardout:
@@ -99,3 +105,5 @@ if __name__ == '__main__':
         elif x['fun']=='workerfit':
             dts=user.fit(rtopic[3])
             producer.send('w2m',{'dts':encode(dts)})
+            producer.flush()
+            producer.close()

@@ -34,7 +34,7 @@ fi
 
 controlpod="$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}' --selector 'target=controller')"
 echo $controlpod
-rsync -av --progress --stats -e './rsync_assist.sh' $filename "$controlpod:/dev/shadow/$filename"
+rsync -av --progress --stats -e './rsync_assist.sh' $filename "$controlpod:/mnt/shadow/$filename"
 #echo curl -d "'""$(generate_post_data)""'" -H \"Content-Type:application/json\" -X POST "http://$controller_ip:4000/api/startdeploy"
 #echo "$(curl -d $(generate_post_data) -H \"Content-Type:application/json\" -X POST "http://$controller_ip:4000/api/startdeploy")"
 

@@ -24,7 +24,7 @@ def imports():
 
 def preprocess():
     global producer,dataset,X_train,X_test,y_test,y_train
-    producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092'])
+    producer = KafkaProducer(acks=True,value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092'])
     # Importing the dataset
     dataset = pd.read_csv('Social_Network_Ads.csv')
     X = dataset.iloc[:, [2, 3]].values
@@ -129,11 +129,15 @@ class User:
         
 
 def consumer(nw):
-    Kconsumer = KafkaConsumer('w2m',bootstrap_servers=['kafka-service:9092'],group_id='master',auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))  
+    Kconsumer = KafkaConsumer('w2m',bootstrap_servers=['kafka-service:9092'],group_id=None,auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))  
     cnt=0
     dts=[]
+    with open('out','a') as stout:
+        print("Consumer start",file=stout,flush=True)
     for msg in Kconsumer:
         x=msg.value
+        with open('out','a') as stout:
+            print(cnt,file=stout,flush=True)
         x = decode(x['dts'])
         for item in x:
             dts.append(item)
