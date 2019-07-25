@@ -126,7 +126,8 @@ class Sequential:
             self.model.save_weights("model.h5")
             '''
             jsonmodel=encode(self.model)
-            jsonmodel = compressStringToBytes(jsonmodel).encode('utf-8')
+            #jsonmodel = compressStringToBytes(jsonmodel).decode('utf-8')
+            jsonmodel = compressStringToBytes(jsonmodel)
             with open('out','a') as stout:
                 print(jsonmodel,file=stout)
             with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -189,7 +190,8 @@ class Sequential:
         K.set_session(self.sess)
 
         with self.graph.as_default():
-            model = decompressBytesToString(model.decode('utf-8'))
+            #model = decompressBytesToString(model.encode('utf-8'))
+            model = decompressBytesToString(model)
             self.model=decode(model)
             #self.model.load_weights('best_model.h5')
 
