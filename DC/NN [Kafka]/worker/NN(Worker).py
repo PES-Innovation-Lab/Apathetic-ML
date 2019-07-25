@@ -4,6 +4,7 @@ from kafka import KafkaConsumer
 import gzip
 from io import StringIO, BytesIO
 from json import dumps,loads
+
 def decompressBytesToString(inputBytes):
   """
   decompress the given byte array (which must be valid
@@ -37,6 +38,7 @@ def compressStringToBytes(inputString):
       compressor.close()
       return stream.getvalue()
     compressor.write(chunk)
+    
 def imports():
     global np,Dense,tf,K,model_from_json,load_model,Graph,Session,acc_score,KafkaProducer,encode,decode,producer
     import numpy as np
@@ -54,6 +56,16 @@ def imports():
     tf.reset_default_graph()
 
     producer = KafkaProducer(acks=True,value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092'])
+    
+def preprocess(n_users,steps):
+    global X_train,y_train,X_test,y_test,X_train_flat,X_test_flat,y_train_oh
+    (X_train,y_train),(X_test,y_test) = mnist.load_data()
+    X_train_flat = X_train.reshape((X_train.shape[0],-1))
+    X_test_flat  = X_test.reshape((X_test.shape[0],-1))
+    y_train_oh = keras.utils.to_categorical(y_train,10)
+    
+    X_train_split = np.array([np.split(_,steps) for _ in np.split(X_train_flat,n_users)])
+    y_train_split = np.array([np.split(_,steps) for _ in np.split(y_train_oh,n_users)])
 
 
 this_host = socket.gethostname()
@@ -67,8 +79,9 @@ with open("out",'a') as standardout:
 
 class User:
 
-    def __init__(self):
+    def __init__(self,n_users,steps):
         imports()
+        preprocess(n_users,steps)
 
         self.graph = Graph()
 
@@ -94,17 +107,19 @@ class User:
 
             self.model.compile(optimizer = optimizer , loss = loss , metrics = metrics)
 
-    def fit(self, X_train, y_train, epochs = 1, batch_size = None):
+    def fit(self, user_i, step_i, epochs = 1, batch_size = None):
+        global X_train_split,y_train_split
         K.set_session(self.sess)
 
         with self.graph.as_default():
-            self.model.fit(X_train , y_train , epochs = 1 , batch_size = int(batch_size))
+            self.model.fit(X_train_split[user_i][step_i] , y_train_split[user_i][step_i] , epochs = 1 , batch_size = int(batch_size))
 
-    def accuracy_score(self, X_test, y_test):
+    def accuracy_score(self):
+        global X_test_flat,y_test
         K.set_session(self.sess)
 
         with self.graph.as_default():
-            y_pred = self.model.predict(X_test)
+            y_pred = self.model.predict(X_test_flat)
             y_pred = [np.argmax(i) for i in y_pred]
             accuracy = acc_score(y_test, y_pred)
             return accuracy
@@ -134,7 +149,9 @@ if __name__ == '__main__':
         with open('out','a') as stout:
             print("MSG",x['fun'],file=stout,flush=True)
         if x['fun']=='userinit':
-            user=User()
+            n_users=x['n_users']
+            steps=x['steps']
+            user=User(n_users,steps)
         elif x['fun']=='usercompile':
             optimizer=x['optimizer']
             loss=x['loss']
@@ -142,15 +159,15 @@ if __name__ == '__main__':
             model=x['model']
             user.compile(optimizer,loss,metrics,model)
         elif x['fun']=='userfit':
-            X_train=np.array(x['X_train'])
-            y_train=np.array(x['y_train'])
+            #X_train=np.array(x['X_train'])
+            #y_train=np.array(x['y_train'])
+            user_i=x['user_i']
+            step_i=x['step_i']
             epochs=x['epochs']
             batch_size=x['batch_size']
-            user.fit(X_train,y_train,epochs,batch_size)
+            user.fit(user_i,step_i,epochs,batch_size)
         elif x['fun']=='accuracyscore':
-            X_test=np.array(x['X_test'])
-            y_test=np.array(x['y_test'])
-            accuracy=user.accuracy_score(X_test,y_test)
+            accuracy=user.accuracy_score()
             producer.send('w2m',{'accuracy':accuracy})
         elif x['fun']=='bestmodel':
             model=user.best_model()
@@ -158,3 +175,4 @@ if __name__ == '__main__':
         elif x['fun']=='bestmodel':
             model=x['model']
             user.update_model(model)
+
