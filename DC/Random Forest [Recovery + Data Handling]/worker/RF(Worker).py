@@ -49,24 +49,33 @@ class User:
         #filestart = time.time()
         #q = Queue()
         #proc = []
-        # for i in range(len(DTs)):
-        #     t_file_name = s+str(i)+'.pkl'
-        #     p = Process(target=file_dumper,args=(q,t_file_name,DTs[i]))
-        #     p.start()
-        #     proc.append(p)
-            
-        # for i in range(len(DTs)):
-        #     proc[i].join()
-        #     dts.append(q.get()) ####DANGER
-        #     #d_temp_file.close()
+        for i in range(len(DTs)):
+            t_file_name = s+str(i)+'.pkl'
+            d_temp_file = open(t_file_name, 'wb')
+            pickle.dump(DTs[i], d_temp_file)
+            dts.append(t_file_name)
+             #p = Process(target=file_dumper,args=(q,t_file_name,DTs[i]))
+             #p.start()
+             #proc.append(p)
+        pickled=[]
+        for i in dts:
+            with open(i,'r') as pklfile:
+                pickled.append(pklfile.read())
+        '''    
+        for i in range(len(DTs)):
+             proc[i].join()
+             dts.append(q.get()) ####DANGER
+             #d_temp_file.close()
         
-        #filestop = time.time()
-        #v = time.time()
-        #with open("out",'a') as standardout:
-        #    print("FIT TIME",v-z,file=standardout)
+        filestop = time.time()
+        v = time.time()
+        with open("out",'a') as standardout:
+            print("FIT TIME",v-z,file=standardout)
         with open("out",'a') as standardout:
             print("FIT COMPLETE",file=standardout)
-        return DTs
+        #return DTs
+        '''
+        return dts,pickled
                 
 if __name__ == '__main__':
     imports()
@@ -103,7 +112,7 @@ if __name__ == '__main__':
                 with open("out",'a') as standardout:
                     print(str(e),file=standardout)
         elif x['fun']=='workerfit':
-            dts=user.fit(rtopic[3])
-            producer.send('w2m',{'dts':encode(dts)})
+            dts,pickled=user.fit(rtopic[3])
+            producer.send('w2m',{'dts':dts,'pickled':pickled})
             producer.flush()
             producer.close()
