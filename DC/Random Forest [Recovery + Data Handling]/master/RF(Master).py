@@ -77,10 +77,15 @@ class RF:
                 executor.submit(users[user_i].fit)
                 
         producer.flush()
-        self.DTs = consumer(self.n_users)
+        
+        self.dts,pickled = consumer(self.n_users)
 
         with open("out",'a') as standardout:
             print("SECOND FOR",time.time()-a,file=standardout)
+
+        for i in range(len(pickled)):
+            with open(self.dts[i]),'w') as pklfile:
+                pklfile.write(pickled[i])
 
         # dts=res
        
@@ -94,6 +99,11 @@ class RF:
         # for i in range(len(proc)):
         #     proc[i].join()
         #     self.DTs.append(q.get())
+        
+        self.DTs = []
+        for i in dts:
+            loaded_model = pickle.load(open(i, 'rb'))
+            self.DTs.append(loaded_model)
 
         b = time.time()
         with open("out",'a') as standardout:
@@ -138,14 +148,16 @@ def consumer(nw):
         x=msg.value
         with open('out','a') as stout:
             print(cnt,file=stout,flush=True)
-        x = decode(x['dts'])
-        for item in x:
-            dts.append(item)
+        #x = decode(x['dts'])
+        dts=x['dts']
+        pickled=x['pickled']
+        #for item in x:
+            #dts.append(item)
         cnt+=1
         if (cnt == nw):
             break
     Kconsumer.close()
-    return dts
+    return dts,pickled
 
 @app.route('/api/master/rf/start/<string:workers>', methods = ['GET'])
 def start(workers):
@@ -168,3 +180,4 @@ def start(workers):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
