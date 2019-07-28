@@ -1,0 +1,9 @@
+Flask
+Requests
+Numpy
+flask_cors
+Pandas
+Scikit-learn
+
+
+
