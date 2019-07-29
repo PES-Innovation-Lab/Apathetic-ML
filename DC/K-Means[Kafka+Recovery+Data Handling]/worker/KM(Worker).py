@@ -9,9 +9,9 @@ topics=[]
 this_host = socket.gethostname()
 myid = this_host[:this_host.find("-")]
 myid = myid[-1]
-producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092'])
+producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092','kafka-service:9091','kafka-service:9090','kafka-service:9093'])
 producers=[]
-KConsumer = KafkaConsumer('sw2w'+myid,bootstrap_servers=['kafka-service:9092'],group_id=None,auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+KConsumer = KafkaConsumer('sw2w'+myid,bootstrap_servers=['kafka-service:9092','kafka-service:9091','kafka-service:9090','kafka-service:9093'],group_id=None,auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
 mrtopic='m2w'+myid
 with open("out",'a') as standardout:
     print("KM Launched",mrtopic,'sw2w'+myid,file=standardout)
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     #global producer,mrtopic,topics,myid
 
     user=None
-    consumer = KafkaConsumer(mrtopic,bootstrap_servers=['kafka-service:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    consumer = KafkaConsumer(mrtopic,bootstrap_servers=['kafka-service:9092','kafka-service:9091','kafka-service:9090','kafka-service:9093'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     for msg in consumer:
         x=msg.value
         with open('out','a') as stout:
@@ -113,7 +113,7 @@ if __name__ == '__main__':
             dataset = np.array(dataset.tolist())
             n_sw=x['n_sw']
             topics=['w2sw'+myid+str(i) for i in range(n_sw)]
-            producers=[KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092']) for i in range(n_sw)]
+            producers=[KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092','kafka-service:9091','kafka-service:9090','kafka-service:9093']) for i in range(n_sw)]
             user=User(dataset)
         elif x['fun']=='initmodel':
             combs=np.array(x['combs'])

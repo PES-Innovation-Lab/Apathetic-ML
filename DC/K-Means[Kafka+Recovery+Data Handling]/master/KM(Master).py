@@ -29,8 +29,8 @@ def preprocess(workers):
     cluster=None
 
     #producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['localhost:9092'])
-    producers=[KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092']) for i in range(workers)]
-    KConsumer = KafkaConsumer('w2m',bootstrap_servers=['kafka-service:9092'],group_id=None,auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    producers=[KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092','kafka-service:9091','kafka-service:9090','kafka-service:9093']) for i in range(workers)]
+    KConsumer = KafkaConsumer('w2m',bootstrap_servers=['kafka-service:9092','kafka-service:9091','kafka-service:9090','kafka-service:9093'],group_id=None,auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     topics=[]
 
     from sklearn.preprocessing import StandardScaler
@@ -103,7 +103,7 @@ class KCluster:
             
             with open("out",'a') as standardout:
                print("ERROR",err,file=standardout)
-               print("Cluster",self.cluster,file=standardout)
+               #print("Cluster",self.cluster,file=standardout)
     
     def ret_cen(self):
         #final_clusters = np.array(self.final_clusters)
@@ -130,6 +130,8 @@ def consumer(nw):
     cnt=0
     for msg in KConsumer:
         x=msg.value
+        with open('out','a') as stout:
+            print("Count",cnt,file=stout,flush=True)
         clusters=x['clusters']
         err=x['err']
         for i in range(len(clusters)):

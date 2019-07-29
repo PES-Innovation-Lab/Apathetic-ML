@@ -6,14 +6,14 @@ from json import dumps,loads
 
 this_host = socket.gethostname()
 myid = this_host[:this_host.find("-")]
-producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092'])
+producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092','kafka-service:9091','kafka-service:9090','kafka-service:9093'])
 rtopic='w2sw'+myid[-2]+myid[-1]   #topic that worker consumes from
 
 with open("out",'a') as standardout:
     print("KM sw Launched",rtopic,file=standardout)
 
 if __name__ == '__main__':
-    consumer = KafkaConsumer(rtopic,bootstrap_servers=['kafka-service:9092'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    consumer = KafkaConsumer(rtopic,bootstrap_servers=['kafka-service:9092','kafka-service:9091','kafka-service:9090','kafka-service:9093'],auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     for msg in consumer:
         x=msg.value
         dataset=np.array(x['dataset'])

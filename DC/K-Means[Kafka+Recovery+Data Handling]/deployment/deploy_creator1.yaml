@@ -93,6 +93,53 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: worker2
+  labels:
+    app: server
+    target: worker2
+spec:
+  selector:
+    matchLabels:
+      target: worker2
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        target: worker2
+    spec:
+      volumes:
+        - name: nfs-store
+          persistentVolumeClaim:
+            claimName: nfs-core-claim
+        - name: local-store
+          persistentVolumeClaim:
+            claimName: localclaim
+      containers:
+        - name: hydraa
+          volumeMounts:
+            - name: nfs-store 
+              mountPath: /dev/core/
+            - name: local-store
+              mountPath: /dev/pers/
+          image: 192.168.0.10:8080/km_v4_worker
+          imagePullPolicy: Always
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+          command: ["sh","start.sh"]
+          ports:
+            - containerPort: 4000
+            - containerPort: 5000
+            - containerPort: 22
+            - containerPort: 873
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      
+---
+#new worker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: subworker00
   labels:
     app: server
@@ -244,6 +291,98 @@ spec:
     metadata:
       labels:
         target: subworker11
+    spec:
+      volumes:
+        - name: nfs-store
+          persistentVolumeClaim:
+            claimName: nfs-core-claim
+        - name: local-store
+          persistentVolumeClaim:
+            claimName: localclaim
+      containers:
+        - name: hydraa
+          volumeMounts:
+            - name: nfs-store 
+              mountPath: /dev/core/
+            - name: local-store
+              mountPath: /dev/pers/
+          image: 192.168.0.10:8080/km_v4_subworker
+          imagePullPolicy: Always
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+          command: ["sh","start.sh"]
+          ports:
+            - containerPort: 4000
+            - containerPort: 5000
+            - containerPort: 22
+            - containerPort: 873
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+---
+#new worker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subworker20
+  labels:
+    app: server
+    target: subworker20
+spec:
+  selector:
+    matchLabels:
+      target: subworker20
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        target: subworker20
+    spec:
+      volumes:
+        - name: nfs-store
+          persistentVolumeClaim:
+            claimName: nfs-core-claim
+        - name: local-store
+          persistentVolumeClaim:
+            claimName: localclaim
+      containers:
+        - name: hydraa
+          volumeMounts:
+            - name: nfs-store 
+              mountPath: /dev/core/
+            - name: local-store
+              mountPath: /dev/pers/
+          image: 192.168.0.10:8080/km_v4_subworker
+          imagePullPolicy: Always
+          env:
+            - name: GET_HOSTS_FROM
+              value: dns
+          command: ["sh","start.sh"]
+          ports:
+            - containerPort: 4000
+            - containerPort: 5000
+            - containerPort: 22
+            - containerPort: 873
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+---
+#new worker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subworker21
+  labels:
+    app: server
+    target: subworker21
+spec:
+  selector:
+    matchLabels:
+      target: subworker21
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        target: subworker21
     spec:
       volumes:
         - name: nfs-store

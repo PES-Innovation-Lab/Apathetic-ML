@@ -12,11 +12,10 @@ spec:
     spec:
       containers:
       - name: kafka
-        image: 192.168.0.10:8080/kafka     ##LOCAL
+        image: wurstmeister/kafka     ##LOCAL
         #image: altariax0x01/kafka                             ##CLOUD
         ports:
         - containerPort: 9092
-        - containerPort: 4000
         env:
         - name: KAFKA_ADVERTISED_PORT
           value: "9092"
@@ -26,4 +25,4 @@ spec:
           value: zoo1:2181
         - name: KAFKA_BROKER_ID
           value: "0"
-        command: ["sh","start.sh"]
+        

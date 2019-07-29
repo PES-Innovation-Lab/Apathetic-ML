@@ -54,6 +54,7 @@ def start(workers):
             #initw = threading.Thread(target=sesh.get, args=(url,))
             #initw.start()                   #start lr(worker) api
             requests.get(url)
+            time.sleep(2)
         url='http://localhost:5000/api/master/km/start'+'/'+str(abc[0])+'+'+str(abc[1])
         #initmodel = threading.Thread(target=sesh.get, args=(url,))
         #initmodel.start()               #begin training

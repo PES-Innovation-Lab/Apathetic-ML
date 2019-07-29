@@ -44,7 +44,29 @@ spec:
   selector:
     target: worker1
   #type: LoadBalancer
-
+---
+#new worker
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker2
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  - name: files
+    port: 22
+    targetPort: 22
+  - name: rsync
+    port: 873
+    targetPort: 873
+  selector:
+    target: worker2
+  #type: LoadBalancer
 
 ---
 #new worker
@@ -144,8 +166,52 @@ spec:
   selector:
     target: subworker11
   #type: LoadBalancer
-
-
+---
+#new worker
+apiVersion: v1
+kind: Service
+metadata:
+  name: subworker20
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  - name: files
+    port: 22
+    targetPort: 22
+  - name: rsync
+    port: 873
+    targetPort: 873
+  selector:
+    target: subworker20
+  #type: LoadBalancer
+---
+#new worker
+apiVersion: v1
+kind: Service
+metadata:
+  name: subworker21
+spec:
+  ports:
+  - name: normal
+    port: 4000
+    targetPort: 4000
+  - name: lr
+    port: 5000
+    targetPort: 5000
+  - name: files
+    port: 22
+    targetPort: 22
+  - name: rsync
+    port: 873
+    targetPort: 873
+  selector:
+    target: subworker21
+  #type: LoadBalancer
 ---
 #new worker
 #master code
