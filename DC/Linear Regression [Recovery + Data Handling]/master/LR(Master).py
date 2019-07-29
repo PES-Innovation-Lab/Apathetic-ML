@@ -21,19 +21,30 @@ def imports():
 
 def preprocess(workers):
     global X_train,X_test,y_train,y_test,producers,KConsumer
-    dataset = pd.read_csv('USA_Housing.csv')
-    X = dataset.iloc[:,0:5].values
-    y = dataset.iloc[:,5].values
+    # dataset = pd.read_csv('USA_Housing.csv')
+    # X = dataset.iloc[:,0:5].values
+    # y = dataset.iloc[:,5].values
 
+    # from sklearn.model_selection import train_test_split
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
+    # # Feature Scaling
+    # from sklearn.preprocessing import StandardScaler
+    # sc_X = StandardScaler()
+    # X_train = sc_X.fit_transform(X_train)
+    # X_test = sc_X.transform(X_test)
+
+    dataset = pd.read_csv('dataset.csv')
+    X = dataset.iloc[:,0].values.reshape(-1,1)
+    y = dataset.iloc[:,1].values
+    from sklearn.preprocessing import StandardScaler
+    X_scaler = StandardScaler()
+    X =  X_scaler.fit_transform(X)
+   
     from sklearn.model_selection import train_test_split
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
-    # Feature Scaling
-    from sklearn.preprocessing import StandardScaler
-    sc_X = StandardScaler()
-    X_train = sc_X.fit_transform(X_train)
-    X_test = sc_X.transform(X_test)
-    producers=[KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092']) for i in range(workers)]
-    KConsumer = KafkaConsumer('w2m',bootstrap_servers=['kafka-service:9092'],group_id="master",auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    
+    producers=[KafkaProducer(acks=True,value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092','kafka-service:9091','kafka-service:9090','kafka-service:9093']) for i in range(workers)]
+    KConsumer = KafkaConsumer('w2m',bootstrap_servers=['kafka-service:9093','kafka-service:9092','kafka-service:9090','kafka-service:9091'],group_id=None,auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
 
     with open("out",'a') as stout:
         print("[INFO] Preprocessing complete",file=stout)
@@ -52,8 +63,8 @@ class LinearRegressor:
         self.n_users = n_users
         self.learning_rate = learning_rate
         
-    def fit(self,train_dataset,train_y,X_test,y_test,n_iters = 200,batch_size = 200):
-        global topics, producers,active,TopicPartition
+    def fit(self,train_dataset,train_y,X_test,y_test,n_iters = 200,batch_size = 10000):
+        global topics, producers,active,TopicPartition,msgcount
         self.number_of_weights = train_dataset.shape[1]
         self.weights = numpy.random.rand(self.number_of_weights,1)
         self.biases = numpy.random.rand()
@@ -74,10 +85,11 @@ class LinearRegressor:
         second = (train_y.shape[0]//self.batch_size)
         with open("out",'a') as stout:
             print("[INFO]",n_iters,second,file=stout)
-
-        #cons = threading.Thread(target=consumer, args=(self.n_users,))
+            print("[INFO] users",self.n_users,"iters",n_iters,"shape",train_dataset.shape[0],"product",(self.n_users*n_iters*(train_dataset.shape[0]//self.batch_size)),file=stout)
+        #cons = threading.Thread(target=consumer, args=(self.n_users*n_iters*(train_dataset.shape[0]+1)//batch_size,))
         #active = 1
         #cons.start()
+
         for j in range(n_iters):
             for step_i in range((train_y.shape[0]//self.batch_size)):
                 with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -86,27 +98,41 @@ class LinearRegressor:
                     for user_i in range(self.n_users):
                         executor.submit(self.users[user_i].fit_model,self.weights,self.biases,step_i,producers[user_i])
                         #self.users[user_i].fit_model(temp_weight,temp_biases,step_i,producers[user_i])                
-                for i in range(self.n_users):
-                    producers[i].flush()
+                    for i in range(self.n_users):
+                        producers[i].flush()
                 if (KConsumer.partitions_for_topic('w2m')):
                     ps = [TopicPartition('w2m', p) for p in KConsumer.partitions_for_topic('w2m')]
                     KConsumer.resume(*ps)
                 consumer(self.n_users)
                 ps = [TopicPartition('w2m', p) for p in KConsumer.partitions_for_topic('w2m')]
                 KConsumer.pause(*ps)
+
         #active = 0
         #cons.join()
+        KConsumer.close()
         b = time.time()
+        with open("out",'a') as stout:
+            print("Rec",msgcount,file=stout,flush=True)
         with open("out",'a') as standardout:
             print("[RESULT] EXEC TIME:",b-a,'s',file=standardout)
         y_pred = self.predict(X_test)
+        with open("out",'a') as standardout:
+            print("Prediction completed",file=standardout)
+            print("[RESULT] Weights, Biases",self.weights,self.biases,file=standardout)
         test_loss=self.test_loss(X_test,y_test)
         with open("out",'a') as standardout:
+            print("Test loss done",file=standardout)
+        with open("out",'a') as standardout:
             print("[RESULT] Test Loss",test_loss,file=standardout)
+            print("[RESULT] Weights, Biases",self.weights,self.biases,file=standardout)
 
     def test_loss(self,test_dataset,test_y):
         result = test_dataset @ self.weights + self.biases
-        result_loss = numpy.square(result-test_y).mean()
+        #with open("out",'a') as standardout:
+        #    print("Before NP",file=standardout,flush=True)
+        result_loss = sum([(test_y[i] - result[i])**2 for i in range(test_y.shape[0])])/test_y.shape[0]#numpy.square(result-test_y).mean()
+        #with open("out",'a') as standardout:
+        #    print("After NP",file=standardout,flush=True)
         return result_loss
     def predict(self,X):
         return X@self.weights + self.biases
@@ -130,17 +156,20 @@ class User:
     def fit_model(self,weights,biases,step,producer):
         producer.send(self.topic,{'fun':'fitmodel','weights':weights.tolist(),'biases':biases,'step':step})
         
-
+msgcount = 0
 def consumer(nw):
-    global regressor,KConsumer #,active
+    global regressor,KConsumer,msgcount
     cnt = 0
     for msg in KConsumer:
+        #with open("out",'a') as stout:
+        #    print("Rec",msgcount,file=stout,flush=True)
         x=msg.value
         regressor.update_model(numpy.array(x['wgrad']),x['bgrad'])
         cnt+=1
+        msgcount+=1
         if (cnt == nw):
             break
-    
+    #KConsumer.close()
 
 
 @app.route('/api/master/lr/start/<string:workers>', methods = ['GET'])
@@ -150,17 +179,19 @@ def start(workers):
     global y_test
     global topics
     imports()
-    preprocess(int(workers))
+    abc = workers.split('+')
+
+    preprocess(int(abc[0]))
     with open("out",'a') as standardout:
         print("Starting processing\n",file=standardout)
     
-    topics=['m2w'+str(i) for i in range(int(workers))]
+    topics=['m2w'+str(i) for i in range(int(abc[0]))]
     
-    regressor = LinearRegressor(learning_rate=0.001,n_users=int(workers))
+    regressor = LinearRegressor(learning_rate=0.001,n_users=int(abc[0]))
    
     pr = cProfile.Profile()
     pr.enable()
-    regressor.fit(X_train,y_train,X_test,y_test,200)
+    regressor.fit(X_train,y_train,X_test,y_test,int(abc[1]))
     pr.disable()
 
     #with open("out",'a') as sys.stdout:

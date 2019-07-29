@@ -72,7 +72,7 @@ def start(filepath):
     file_to_be_used = file_to_be_used.decode("utf-8")
     with open("out",'a') as std:
         print("Allocated: ",file_to_be_used,file=std)
-    proc = subprocess.Popen(["cp",'/dev/core/data/'+str(file_to_be_used),'/app/'+filepath],stdout=subprocess.PIPE)
+    proc = subprocess.Popen(["cp",'/dev/core/data/'+str(file_to_be_used),'/app/'+filepath],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     (out, err) = proc.communicate()
     with open("out",'a') as std:
         print("Output:",str(out.decode('ascii')),"Stderr:",str(err),file=std)

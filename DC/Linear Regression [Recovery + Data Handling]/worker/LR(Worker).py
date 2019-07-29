@@ -11,7 +11,7 @@ import ast
 this_host = socket.gethostname()
 myid = this_host[:this_host.find("-")]
 myid = myid[-1]
-producer = KafkaProducer(value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9092'])
+producer = KafkaProducer(acks=True,value_serializer=lambda v: dumps(v).encode('utf-8'),bootstrap_servers = ['kafka-service:9093','kafka-service:9092','kafka-service:9091','kafka-service:9090'])
 rtopic='m2w'+myid   #topic that worker consumes from
 with open("out",'a') as standardout:
     print("LR Launched",rtopic,file=standardout)
@@ -34,13 +34,14 @@ class User:
 
 if __name__ == '__main__':
     
-    global producer
-    global rtopic
+    
     user=None
-    consumer = KafkaConsumer(rtopic,bootstrap_servers=['kafka-service:9092'],group_id=rtopic,auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
+    consumer = KafkaConsumer(rtopic,bootstrap_servers=['kafka-service:9093','kafka-service:9092','kafka-service:9090','kafka-service:9091'],group_id=rtopic,auto_offset_reset='earliest',value_deserializer=lambda x: loads(x.decode('utf-8')))
     for msg in consumer:
         #x=ast.literal_eval(msg.value)
         x=msg.value
+        with open('out','a') as stout:
+            print("MESSAGE",x['fun'],file=stout,flush= True)
         if x['fun']=='userinit':
             user=User(x['learning_rate'])
         elif x['fun']=='initmodel':
@@ -48,23 +49,35 @@ if __name__ == '__main__':
                 with open("out",'a') as standardout:
                     print("Initialising model",file=standardout)
                 
-                dataset = pd.read_csv('USA_Housing.csv')
-                X = dataset.iloc[:,0:5].values
-                y = dataset.iloc[:,5].values
-                from sklearn.model_selection import train_test_split
-                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
+                # # # # dataset = pd.read_csv('USA_Housing.csv')
+                # # # # X = dataset.iloc[:,0:5].values
+                # # # # y = dataset.iloc[:,5].values
+                # # # # from sklearn.model_selection import train_test_split
+                # # # # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
 
-                with open("out",'a') as standardout:
-                    print("Xshape",X.shape,file=standardout)
+                # # # # with open("out",'a') as standardout:
+                # # # #     print("Xshape",X.shape,file=standardout)
 
-                # Feature Scaling
+                # # # # # Feature Scaling
+                # # # # from sklearn.preprocessing import StandardScaler
+                # # # # sc_X = StandardScaler()
+                # # # # X = sc_X.fit_transform(X)
+
+                # # # # with open("out",'a') as standardout:
+                # # # #     print("Xshape",X.shape,file=standardout)
+
+                dataset = pd.read_csv('dataset.csv')
+                X = dataset.iloc[:,0].values.reshape(-1,1)
+                y = dataset.iloc[:,1].values
                 from sklearn.preprocessing import StandardScaler
-                sc_X = StandardScaler()
-                X = sc_X.fit_transform(X)
-
+                X_scaler = StandardScaler()
+                X =  X_scaler.fit_transform(X)
                 with open("out",'a') as standardout:
                     print("Xshape",X.shape,file=standardout)
-
+                #from sklearn.model_selection import train_test_split
+                #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
+                X_train = X
+                y_train = y
                 batch_size=x['batch_size']
                 user.init_model(X,y,batch_size)
 
@@ -78,3 +91,4 @@ if __name__ == '__main__':
             #     print(count,file=standardout)
             (wgrad,bgrad)=user.fit_model(numpy.array(x['weights']),x['biases'],x['step'])
             producer.send('w2m',{'wgrad':wgrad.tolist(),'bgrad':bgrad})
+            

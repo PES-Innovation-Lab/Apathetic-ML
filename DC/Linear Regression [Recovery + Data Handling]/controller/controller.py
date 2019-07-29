@@ -83,9 +83,10 @@ def start():
         (out, err) = proc.communicate()
         with open("out",'a') as std:
             print("Output:",str(out.decode('ascii')),"Stderr:",str(err),file=std)
-        proc = subprocess.Popen(["./master_script.sh",json['splits'],'/dev/shadow/'+ json['filename'],json['header']],stdout=subprocess.PIPE)
+        proc = subprocess.Popen(["./master_script.sh",json['splits'],'/mnt/shadow/'+ json['filename'],json['header']],stdout=subprocess.PIPE)
         (out, err) = proc.communicate()
         with open("out",'a') as std:
+            print(json['filename'],file=std)
             print("Output:",str(out.decode('ascii')),"Stderr:",str(err),file=std)
         # proc = subprocess.Popen(["cd",'/dev/shadow/data/'],stdout=subprocess.PIPE)
         # (out, err) = proc.communicate()
