@@ -51,7 +51,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: subworker0
+  name: subworker00
 spec:
   ports:
   - name: normal
@@ -67,7 +67,7 @@ spec:
     port: 873
     targetPort: 873
   selector:
-    target: subworker0
+    target: subworker00
   #type: LoadBalancer
 
 
@@ -76,7 +76,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: subworker1
+  name: subworker01
 spec:
   ports:
   - name: normal
@@ -92,14 +92,14 @@ spec:
     port: 873
     targetPort: 873
   selector:
-    target: subworker1
+    target: subworker01
   #type: LoadBalancer
 ---
 #new worker
 apiVersion: v1
 kind: Service
 metadata:
-  name: subworker2
+  name: subworker10
 spec:
   ports:
   - name: normal
@@ -115,7 +115,7 @@ spec:
     port: 873
     targetPort: 873
   selector:
-    target: subworker2
+    target: subworker10
   #type: LoadBalancer
 
 
@@ -124,7 +124,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: subworker3
+  name: subworker11
 spec:
   ports:
   - name: normal
@@ -140,7 +140,7 @@ spec:
     port: 873
     targetPort: 873
   selector:
-    target: subworker3
+    target: subworker11
   #type: LoadBalancer
 ---
 #new worker
