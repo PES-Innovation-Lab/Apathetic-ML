@@ -10,10 +10,6 @@ num_workers = x[0]
 model = (x[2])
 num_sw = x[4][2]
 
-#prints all data from TUI
-#for i in x:
-#    print(i)
-
 def worker_add(file):
     f = open(file,'r')
     lines = f.readlines()
@@ -28,21 +24,16 @@ def worker_add(file):
 
     copy = lines[0:pos+1]
     copy2 = lines[pos+1:pos_sw+1]
-    #img_worker = str(
     l = lines[0:pos + 1]
 
     for i in range(1,num_workers):
         a = [x.replace('worker0','worker'+str(i)) for x in copy]
         l.extend(a)
-        
-    a = []
     
     if(model == 'K-Means Clustering'):    
         for i in range(0,num_workers):
-#             for  j in range(0,2):
               for j in range(0,num_sw):
                 a = [x.replace('subworker00','subworker'+str(i)+str(j)) for x in copy2]
-                #a = [x.replace('km_worker_res','km_v3_subworker') for x in a]
                 l.extend(a)
                 
     l.extend(lines[pos_m:])
