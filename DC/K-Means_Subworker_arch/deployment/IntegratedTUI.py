@@ -8,6 +8,7 @@ import os
 x = BT.screen()
 num_workers = x[0]
 model = (x[2])
+num_sw = x[4][2]
 
 #prints all data from TUI
 #for i in x:
@@ -20,10 +21,14 @@ def worker_add(file):
     for i in lines:
         if '#new worker' in i:
             pos = lines.index(i)
+        if '#new subworker' in i:
+            pos_sw = lines.index(i)
         if '#master code' in i:
             pos_m = lines.index(i)
 
     copy = lines[0:pos+1]
+    copy2 = lines[pos+1:pos_sw+1]
+    #img_worker = str(
     l = lines[0:pos + 1]
 
     for i in range(1,num_workers):
@@ -34,9 +39,10 @@ def worker_add(file):
     
     if(model == 'K-Means Clustering'):    
         for i in range(0,num_workers):
-             for  j in range(0,2):
-                a = [x.replace('worker0','subworker'+str(i)+str(j)) for x in copy]
-                a = [x.replace('km_worker_res','km_v3_subworker') for x in a]
+#             for  j in range(0,2):
+              for j in range(0,num_sw):
+                a = [x.replace('subworker00','subworker'+str(i)+str(j)) for x in copy2]
+                #a = [x.replace('km_worker_res','km_v3_subworker') for x in a]
                 l.extend(a)
                 
     l.extend(lines[pos_m:])

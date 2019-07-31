@@ -29,6 +29,7 @@ class Second(npyscreen.Form):
         elif model_type=='K-Means Clustering':
             self.n_iters=self.add(npyscreen.TitleText,name='No. of iterations:')
             self.k=self.add(npyscreen.TitleText,name='K:')
+            self.ns=self.add(npyscreen.TitleText,name='No. of Subworkers:')
         elif model_type=='Random Forest Classification':
             self.n_trees=self.add(npyscreen.TitleText,name='No. of Decision Trees:')
         elif model_type=='Neural Networks Classification':
@@ -45,7 +46,7 @@ class Second(npyscreen.Form):
             if model_type in ['Linear Regression','Logistic Regression']:
                 hyperparams=[int(self.batch_size.value),int(self.n_iters.value),float(self.learning_rate.value)]
             elif model_type=='K-Means Clustering':
-                hyperparams=[int(self.n_iters.value),int(self.k.value)]
+                hyperparams=[int(self.n_iters.value),int(self.k.value),int(self.ns.value)]
             elif model_type=='Random Forest Classification':
                 hyperparams=[int(self.n_trees.value)]
             elif model_type=='Neural Networks Classification':
