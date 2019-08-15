@@ -54,4 +54,4 @@ worker_add('svc_create1.yaml')
 #print('Cluster created on GCP!')
 
 print('Setup started')
-subprocess.call('./deploy_all.sh',shell=True)
+#subprocess.call('./deploy_all.sh',shell=True)
